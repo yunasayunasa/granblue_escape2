@@ -1,0 +1,742 @@
+// ===== game.js: 状態管理・メインロジック =====
+
+'use strict';
+
+// ===== ゲーム状態 =====
+const state = {
+  currentScene: 'title',
+  currentView: 'front',
+  inventory: [],
+  inspected: {},
+  selectedItems: [],
+  flags: {
+    candleLit: false,
+    tabletRevealed: false,
+    rubbingDone: false,
+    overlayRead: false,
+    windowIlluminated: false,
+    symbolOrder: [],
+    doorUnlocked: false,
+    corridorUnlocked: false,
+    muistraDialogue: 0,
+    muistraAnswers: [],
+  },
+};
+
+// ===== Web Audio API 効果音 =====
+let audioCtx = null;
+
+function getAudioCtx() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  return audioCtx;
+}
+
+function triggerSFX(type) {
+  try {
+    const ctx = getAudioCtx();
+    const now = ctx.currentTime;
+
+    switch (type) {
+      case 'item_get': {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.linearRampToValueAtTime(880, now + 0.15);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        osc.start(now); osc.stop(now + 0.3);
+        break;
+      }
+      case 'item_use': {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(220, now);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        osc.start(now); osc.stop(now + 0.12);
+        break;
+      }
+      case 'combine': {
+        [0, 0.1, 0.2].forEach((t, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime([528, 660, 792][i], now + t);
+          osc.frequency.linearRampToValueAtTime([660, 792, 1056][i], now + t + 0.2);
+          gain.gain.setValueAtTime(0.2, now + t);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + t + 0.35);
+          osc.start(now + t); osc.stop(now + t + 0.35);
+        });
+        break;
+      }
+      case 'correct': {
+        [0, 0.12, 0.24].forEach((t, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime([523, 659, 784][i], now + t);
+          gain.gain.setValueAtTime(0.25, now + t);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + t + 0.4);
+          osc.start(now + t); osc.stop(now + t + 0.4);
+        });
+        break;
+      }
+      case 'wrong': {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.linearRampToValueAtTime(80, now + 0.3);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        osc.start(now); osc.stop(now + 0.3);
+        break;
+      }
+      case 'door_open': {
+        [0, 0.15, 0.3].forEach((t) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(80 - t * 20, now + t);
+          gain.gain.setValueAtTime(0.3, now + t);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + t + 0.4);
+          osc.start(now + t); osc.stop(now + t + 0.4);
+        });
+        break;
+      }
+      case 'text': {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(800, now);
+        gain.gain.setValueAtTime(0.04, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+        osc.start(now); osc.stop(now + 0.04);
+        break;
+      }
+    }
+  } catch (e) {
+    // AudioAPI未対応環境では無視
+  }
+}
+
+// ===== タイトル→ゲーム遷移 =====
+function startGame() {
+  triggerSFX('correct');
+  const title = document.getElementById('title-screen');
+  const game  = document.getElementById('game-screen');
+  title.classList.add('hidden');
+  game.classList.remove('hidden');
+  state.currentScene = 'game';
+  state.currentView  = 'front';
+  loadScene('front');
+  setupSwipe();
+}
+
+// ===== シーン読み込み =====
+function loadScene(viewId) {
+  state.currentView = viewId;
+  const sceneView = document.getElementById('scene-view');
+
+  // 遷移アニメーション
+  sceneView.classList.add('transitioning');
+  setTimeout(() => sceneView.classList.remove('transitioning'), 300);
+
+  const scene = getScene(viewId);
+  sceneView.innerHTML = scene.render(state);
+
+  // ラベル更新
+  const label = document.getElementById('scene-label');
+  if (label) label.textContent = VIEW_LABELS[viewId] || '';
+
+  // ナビゲーションボタン制御
+  const isSpecial = viewId === 'corridor' || viewId === 'muistra';
+  document.getElementById('btn-left').style.display  = isSpecial ? 'none' : 'flex';
+  document.getElementById('btn-right').style.display = isSpecial ? 'none' : 'flex';
+
+  renderInventory();
+}
+
+// ===== 視点移動 =====
+function navigateView(direction) {
+  if (state.currentView === 'corridor' || state.currentView === 'muistra') return;
+  triggerSFX('item_use');
+  const idx = VIEW_ORDER.indexOf(state.currentView);
+  let next;
+  if (direction === 'left') {
+    next = VIEW_ORDER[(idx - 1 + VIEW_ORDER.length) % VIEW_ORDER.length];
+  } else {
+    next = VIEW_ORDER[(idx + 1) % VIEW_ORDER.length];
+  }
+  loadScene(next);
+}
+
+// ===== スポットクリック処理 =====
+function handleSpotClick(spotId) {
+  triggerSFX('item_use');
+
+  // アイテムを持っていて使用モード
+  if (state.selectedItems.length === 1) {
+    const itemId = state.selectedItems[0];
+    const used = tryUseItemOnSpot(itemId, spotId);
+    if (used) {
+      clearSelection();
+      return;
+    }
+  }
+
+  switch (spotId) {
+    // --- 正面 ---
+    case 'floor-candle':
+      addItem('candle');
+      showDialog('古い燭台を拾った。蝋が少し残っている。');
+      break;
+
+    case 'oil-bottle':
+      addItem('oil');
+      showDialog('小さな陶器の瓶を拾った。植物油が入っているようだ。');
+      break;
+
+    case 'torch-left':
+      if (state.flags.candleLit) {
+        showDialog('松明ブラケットに炎が揺れている。牢獄をほのかに照らす。');
+      } else {
+        showDialog('古い松明ブラケット。火はついていない。\n灯り燭台を使えば火を移せそうだ。');
+      }
+      break;
+
+    case 'lock':
+      if (state.flags.doorUnlocked) {
+        showDialog('錠前はすでに開いている。');
+      } else if (state.inventory.includes('old_key')) {
+        tryUseItemOnSpot('old_key', 'lock');
+      } else {
+        showDialog('頑丈な錠前だ。正しい鍵が必要だろう。\nまず記号の順序を解かなければならない。');
+      }
+      break;
+
+    case 'corridor-enter':
+      loadScene('corridor');
+      break;
+
+    // --- 左手 ---
+    case 'tablet':
+      inspectTablet();
+      break;
+
+    case 'charcoal-piece':
+      addItem('charcoal');
+      showDialog('炭の欠片を拾った。何かを写し取るのに使えそうだ。');
+      break;
+
+    case 'parchment-scroll':
+      addItem('parchment');
+      showDialog('古い羊皮紙を見つけた。薄くてしなやかだ。');
+      break;
+
+    case 'key-frag-a':
+      addItem('key_fragment1');
+      showDialog('壁の割れ目から鍵の欠片を見つけた。もう一つどこかにあるはずだ。');
+      break;
+
+    // --- 背面 ---
+    case 'window':
+      inspectWindow();
+      break;
+
+    case 'relief':
+      inspectRelief();
+      break;
+
+    case 'muistra-note':
+      addItem('muistra_note');
+      showDialog('ムイスタの手記を見つけた。\n「この牢獄の扉は三つの記号の順で開く。\n　石板の刻文に答えがある。炎で照らせ。」');
+      break;
+
+    // --- 右手 ---
+    case 'device':
+      if (state.flags.doorUnlocked) {
+        showDialog('装置は作動済みだ。');
+      } else {
+        showDialog('解錠装置。三つの記号を正しい順に入力せよ。\n石板の文字が順序を示しているようだ。');
+      }
+      break;
+
+    case 'key-frag-b':
+      addItem('key_fragment2');
+      showDialog('月光に輝く鍵の欠片を見つけた。欠片Aと合わさりそうだ。');
+      break;
+
+    case 'back-to-room':
+      loadScene('front');
+      break;
+
+    // --- 回廊 ---
+    case 'muistra-approach':
+      loadScene('muistra');
+      break;
+
+    // --- ムイスタ ---
+    case 'talk-muistra':
+      startMuistraDialogue();
+      break;
+
+    default:
+      showDialog('特に何もない。');
+  }
+}
+
+// ===== 石板調査 =====
+function inspectTablet() {
+  if (state.flags.rubbingDone) {
+    showDialog('石板の拓本はすでに取った。');
+    return;
+  }
+  if (state.flags.candleLit) {
+    state.flags.tabletRevealed = true;
+    loadScene(state.currentView);
+    showDialog('燭台の炎で石板を照らすと、隠れていた文字が浮かび上がった！\n○　▲　◆\nこれが順序だ。');
+  } else {
+    showDialog('古い石板に刻まれた模様。霞んで読めない。\n炎で照らせば何か見えるかもしれない。');
+  }
+}
+
+// ===== 窓調査 =====
+function inspectWindow() {
+  if (state.flags.windowIlluminated) {
+    showDialog('月光が差し込んでいる。レリーフの何かが輝いている。');
+    return;
+  }
+  if (state.inventory.includes('candle_lit')) {
+    tryUseItemOnSpot('candle_lit', 'window');
+  } else {
+    showDialog('高い位置に小さな窓がある。月が見える。\n光を当てれば何か見えるかもしれない。');
+  }
+}
+
+// ===== レリーフ調査 =====
+function inspectRelief() {
+  if (!state.flags.windowIlluminated) {
+    showDialog('壁に刻まれた複雑なレリーフ。暗くてよく見えない。\n窓から光を当てれば……');
+    return;
+  }
+  if (state.inventory.includes('key_fragment2') || state.inventory.includes('old_key')) {
+    showDialog('レリーフが月光を反射している。鍵の欠片はすでに手に入れた。');
+  } else {
+    showDialog('月光が差し込み、レリーフの中心が輝いた。\n鍵の欠片が隠されていたようだ！');
+    addItem('key_fragment2');
+  }
+}
+
+// ===== アイテムをスポットに使用 =====
+function tryUseItemOnSpot(itemId, spotId) {
+  triggerSFX('item_use');
+
+  // 燭台_lit → 石板
+  if (itemId === 'candle_lit' && spotId === 'tablet') {
+    state.flags.tabletRevealed = true;
+    loadScene(state.currentView);
+    showDialog('炎で石板を照らすと、隠れていた記号が浮かび上がった！\n○　▲　◆\nこれが扉の解錠順だ。');
+    return true;
+  }
+
+  // 燭台_lit → 窓
+  if (itemId === 'candle_lit' && spotId === 'window') {
+    state.flags.windowIlluminated = true;
+    loadScene(state.currentView);
+    showDialog('燭台の炎を窓枠に近づけると、壁のレリーフに光が反射し何かが浮かび上がった！');
+    triggerSFX('correct');
+    return true;
+  }
+
+  // 燭台_lit → 松明
+  if (itemId === 'candle_lit' && spotId === 'torch-left') {
+    state.flags.candleLit = true;
+    loadScene(state.currentView);
+    showDialog('松明に炎を移した。牢獄が明るくなった。');
+    triggerSFX('correct');
+    return true;
+  }
+
+  // 古鍵 → 錠前
+  if (itemId === 'old_key' && spotId === 'lock') {
+    state.flags.doorUnlocked = true;
+    removeItem('old_key');
+    loadScene(state.currentView);
+    showDialog('錠前に鍵を差し込むと、重い音を立てて開いた。\n扉の先へ進める！');
+    triggerSFX('door_open');
+    return true;
+  }
+
+  // 炭 → 石板（拓本）
+  if (itemId === 'charcoal' && spotId === 'tablet') {
+    if (!state.inventory.includes('parchment')) {
+      showDialog('羊皮紙がなければ拓本は取れない。');
+      return true;
+    }
+    if (!state.flags.tabletRevealed && !state.flags.candleLit) {
+      showDialog('まず炎で石板の文字を浮かび上がらせる必要がある。');
+      return true;
+    }
+    removeItem('charcoal');
+    removeItem('parchment');
+    addItem('rubbing');
+    state.flags.rubbingDone = true;
+    loadScene(state.currentView);
+    showDialog('炭と羊皮紙で石板の模様を写し取った。拓本が完成した。');
+    triggerSFX('combine');
+    return true;
+  }
+
+  return false;
+}
+
+// ===== シンボル入力 =====
+function handleSymbolInput(symbol) {
+  if (state.flags.doorUnlocked) return;
+  if (state.flags.symbolOrder.includes(symbol)) return;
+
+  triggerSFX('item_use');
+  state.flags.symbolOrder.push(symbol);
+  loadScene(state.currentView);
+
+  if (state.flags.symbolOrder.length === 3) {
+    const correct = ['○', '▲', '◆'];
+    const isCorrect = state.flags.symbolOrder.every((s, i) => s === correct[i]);
+    if (isCorrect) {
+      state.flags.corridorUnlocked = true;
+      state.flags.doorUnlocked = true;
+      triggerSFX('correct');
+      loadScene(state.currentView);
+      showDialog('正解！　装置が作動し、錠前が外れた。\n扉が開いている！');
+    } else {
+      triggerSFX('wrong');
+      state.flags.symbolOrder = [];
+      loadScene(state.currentView);
+      showDialog('記号の順序が違う……装置がリセットされた。\n正しい順序を確認してからもう一度試そう。');
+    }
+  }
+}
+
+function resetSymbolOrder() {
+  if (state.flags.doorUnlocked) return;
+  state.flags.symbolOrder = [];
+  loadScene(state.currentView);
+}
+
+// ===== ムイスタの対話 =====
+const MUISTRA_DIALOGUES = [
+  {
+    text: '……久しぶりに人の気配を感じた。\nここは霧の牢獄。迷い込んだ者は容易に出られぬ。\nお前も脱出を望むか？',
+    options: [
+      { text: '助けてほしい', next: 1 },
+      { text: '自分で出られる', next: 2 },
+    ],
+  },
+  {
+    text: '素直でよい。\n扉を開けるだけでは足りぬ。\n回廊の先に霧の核がある。それを砕けば霧は晴れる。\n……お前ならできる。行け。',
+    options: null,
+    onEnd: () => {
+      state.flags.muistraDialogue = 99;
+      state.flags.muistraAnswers.push('助け');
+      setTimeout(() => triggerEnding('good'), 1000);
+    },
+  },
+  {
+    text: 'フ……気概はある。\nだが霧の牢獄を侮るな。\n回廊の先で核を砕く。それが唯一の道だ。\n……ついてこい。',
+    options: null,
+    onEnd: () => {
+      state.flags.muistraDialogue = 99;
+      state.flags.muistraAnswers.push('自力');
+      setTimeout(() => triggerEnding('good'), 1000);
+    },
+  },
+];
+
+function startMuistraDialogue() {
+  const idx = state.flags.muistraDialogue;
+  if (idx === 99) {
+    showDialog('ムイスタは静かに前を見つめている。');
+    return;
+  }
+  if (idx >= MUISTRA_DIALOGUES.length) {
+    showDialog('ムイスタは何も言わない。');
+    return;
+  }
+  const dlg = MUISTRA_DIALOGUES[idx];
+  showDialog(dlg.text, dlg.options, dlg.onEnd, 'ムイスタ');
+}
+
+// ===== アイテム管理 =====
+function addItem(itemId) {
+  if (state.inventory.includes(itemId)) return;
+  if (state.inventory.length >= 8) {
+    showDialog('持ち物がいっぱいだ。何かを整理する必要がある。');
+    return;
+  }
+  state.inventory.push(itemId);
+  triggerSFX('item_get');
+  renderInventory();
+}
+
+function removeItem(itemId) {
+  const idx = state.inventory.indexOf(itemId);
+  if (idx !== -1) state.inventory.splice(idx, 1);
+  state.selectedItems = state.selectedItems.filter(id => id !== itemId);
+  renderInventory();
+}
+
+function selectItem(slotIndex) {
+  const itemId = state.inventory[slotIndex];
+  if (!itemId) return;
+
+  triggerSFX('item_use');
+  const idx = state.selectedItems.indexOf(itemId);
+  if (idx !== -1) {
+    // 選択解除
+    state.selectedItems.splice(idx, 1);
+  } else if (state.selectedItems.length < 2) {
+    state.selectedItems.push(itemId);
+  } else {
+    // 3個目は最初を外して入れ替え
+    state.selectedItems.shift();
+    state.selectedItems.push(itemId);
+  }
+  renderInventory();
+  document.getElementById('btn-combine').disabled = state.selectedItems.length !== 2;
+}
+
+function clearSelection() {
+  state.selectedItems = [];
+  renderInventory();
+  document.getElementById('btn-combine').disabled = true;
+}
+
+// ===== アイテム合成 =====
+function tryCombine() {
+  if (state.selectedItems.length !== 2) return;
+  const [a, b] = state.selectedItems;
+
+  const recipe = COMBINE_RECIPES.find(r =>
+    (r.inputs[0] === a && r.inputs[1] === b) ||
+    (r.inputs[0] === b && r.inputs[1] === a)
+  );
+
+  if (!recipe) {
+    triggerSFX('wrong');
+    showDialog('この二つは組み合わせられない。');
+    clearSelection();
+    return;
+  }
+
+  removeItem(recipe.inputs[0]);
+  removeItem(recipe.inputs[1]);
+
+  // 特殊フラグ更新
+  if (recipe.output === 'candle_lit') state.flags.candleLit = true;
+  if (recipe.output === 'rubbing') state.flags.rubbingDone = true;
+  if (recipe.output === 'overlay') state.flags.overlayRead = true;
+
+  addItem(recipe.output);
+  triggerSFX(recipe.sfx || 'combine');
+  showDialog(recipe.msg);
+  clearSelection();
+  loadScene(state.currentView);
+}
+
+// ===== インベントリ描画 =====
+function renderInventory() {
+  for (let i = 0; i < 8; i++) {
+    const slot = document.getElementById(`slot-${i}`);
+    if (!slot) continue;
+    const itemId = state.inventory[i];
+    if (itemId) {
+      const item = ITEMS[itemId];
+      const isSelected = state.selectedItems.includes(itemId);
+      slot.innerHTML = `<span class="${isSelected ? '' : ''}">${item.emoji}</span>`;
+      slot.classList.add('has-item');
+      slot.classList.toggle('selected', isSelected);
+      slot.title = item.name;
+    } else {
+      slot.innerHTML = '';
+      slot.classList.remove('has-item', 'selected');
+      slot.title = '';
+    }
+  }
+  document.getElementById('btn-combine').disabled = state.selectedItems.length !== 2;
+}
+
+// ===== ダイアログ表示 =====
+let typewriterTimer = null;
+
+function showDialog(text, options = null, onEnd = null, speaker = '') {
+  const area    = document.getElementById('dialog-area');
+  const spkEl   = document.getElementById('dialog-speaker');
+  const textEl  = document.getElementById('dialog-text');
+  const optEl   = document.getElementById('dialog-options');
+  const closeBtn = document.getElementById('dialog-close');
+
+  area.classList.remove('hidden');
+  spkEl.textContent  = speaker || '';
+  textEl.textContent = '';
+  optEl.innerHTML    = '';
+
+  // タイプライター
+  if (typewriterTimer) { clearInterval(typewriterTimer); typewriterTimer = null; }
+  let i = 0;
+  typewriterTimer = setInterval(() => {
+    if (i < text.length) {
+      textEl.textContent += text[i];
+      if (i % 3 === 0) triggerSFX('text');
+      i++;
+    } else {
+      clearInterval(typewriterTimer);
+      typewriterTimer = null;
+
+      // 選択肢表示
+      if (options && options.length > 0) {
+        closeBtn.style.display = 'none';
+        options.forEach(opt => {
+          const btn = document.createElement('button');
+          btn.className = 'dialog-option-btn';
+          btn.textContent = opt.text;
+          btn.onclick = () => {
+            state.flags.muistraDialogue = opt.next;
+            closeDialog();
+            setTimeout(() => startMuistraDialogue(), 200);
+          };
+          optEl.appendChild(btn);
+        });
+      } else {
+        closeBtn.style.display = 'block';
+        if (onEnd) {
+          closeBtn.onclick = () => { closeDialog(); onEnd(); };
+        } else {
+          closeBtn.onclick = closeDialog;
+        }
+      }
+    }
+  }, 40);
+}
+
+function closeDialog() {
+  if (typewriterTimer) { clearInterval(typewriterTimer); typewriterTimer = null; }
+  document.getElementById('dialog-area').classList.add('hidden');
+  document.getElementById('dialog-options').innerHTML = '';
+  document.getElementById('dialog-close').onclick = closeDialog;
+  document.getElementById('dialog-close').style.display = 'block';
+}
+
+// ===== ヒントシステム =====
+function showHint() {
+  triggerSFX('item_use');
+  const hint = getHint();
+  showDialog(`【ヒント】\n${hint}`, null, null, 'システム');
+}
+
+function getHint() {
+  const f = state.flags;
+  const inv = state.inventory;
+
+  // エンディング後
+  if (f.muistraDialogue === 99) return 'ムイスタと話した。回廊の先へ進もう。';
+
+  // 基本収集フェーズ
+  if (!inv.includes('candle') && !f.candleLit)
+    return '正面の床に燭台が落ちている。拾ってみよう。';
+  if (!inv.includes('oil') && !f.candleLit)
+    return '正面の壁沿いに油瓶がある。燭台に注ぐことができるかも。';
+  if (inv.includes('candle') && inv.includes('oil') && !f.candleLit)
+    return '燭台と油瓶を選択して「合成」ボタンを押してみよう。';
+  if (!inv.includes('charcoal'))
+    return '左手の壁に炭の欠片がある。石板を写すのに使える。';
+  if (!inv.includes('parchment'))
+    return '左手の壁際に羊皮紙が落ちている。炭と組み合わせよう。';
+
+  // 石板フェーズ
+  if (f.candleLit && !f.tabletRevealed && inv.includes('candle_lit'))
+    return '火のついた燭台を持って、左手の石板に使ってみよう。';
+  if (!f.tabletRevealed && f.candleLit)
+    return '左手の石板に「灯り燭台」を使うと隠し文字が見えるかも。';
+  if (f.tabletRevealed && inv.includes('charcoal') && inv.includes('parchment'))
+    return '炭と羊皮紙を左手の石板に使って拓本を取ろう。';
+  if (f.tabletRevealed && !f.rubbingDone)
+    return '石板に炭を選択して使ってみよう（羊皮紙も必要）。';
+
+  // 透かし紙フェーズ
+  if (inv.includes('rubbing') && inv.includes('parchment') && !f.overlayRead)
+    return '拓本と羊皮紙を選択して「合成」すると、重ね合わせができるかも。';
+
+  // 窓・鍵フェーズ
+  if (!f.windowIlluminated && inv.includes('candle_lit'))
+    return '背面の窓に灯り燭台を使うと、壁のレリーフが見えるかも。';
+  if (!f.windowIlluminated)
+    return '背面の小窓を調べてみよう。灯りがあれば何か見えるはずだ。';
+
+  // 鍵の欠片
+  if (!inv.includes('key_fragment1') && !inv.includes('old_key'))
+    return '左手の壁の割れ目に鍵の欠片がある。';
+  if (!inv.includes('key_fragment2') && f.windowIlluminated && !inv.includes('old_key'))
+    return '背面のレリーフを調べてみよう。月光の中に何かが輝いている。';
+  if (inv.includes('key_fragment1') && inv.includes('key_fragment2') && !inv.includes('old_key'))
+    return '鍵の欠片AとBを選択して「合成」しよう。';
+
+  // シンボル入力フェーズ
+  if (!f.doorUnlocked && f.tabletRevealed && inv.includes('old_key'))
+    return '右手の解錠装置で、石板に書いてあった記号を順に入力しよう（○→▲→◆）。';
+  if (!f.doorUnlocked && f.tabletRevealed)
+    return '右手の解錠装置で記号を入力しよう。石板の順序は○→▲→◆だ。';
+  if (!f.doorUnlocked)
+    return '石板の記号の順序を確認して、右手の装置に入力しよう。';
+
+  // 扉開放後
+  if (f.doorUnlocked && !f.corridorUnlocked)
+    return '扉が開いた！正面から回廊へ進もう。';
+  if (f.corridorUnlocked && f.muistraDialogue < 99)
+    return '回廊を進むとムイスタがいる。話しかけてみよう。';
+
+  return '周囲をよく観察しよう。まだ見落としているものがあるかもしれない。';
+}
+
+// ===== スワイプ検出 =====
+function setupSwipe() {
+  const sceneView = document.getElementById('scene-view');
+  let touchStartX = 0;
+  let touchStartY = 0;
+
+  sceneView.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].clientX;
+    touchStartY = e.changedTouches[0].clientY;
+  }, { passive: true });
+
+  sceneView.addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+      navigateView(dx < 0 ? 'right' : 'left');
+    }
+  }, { passive: true });
+}
+
+// ===== エンディングトリガー =====
+function triggerEnding(type) {
+  closeDialog();
+  const endingScreen = document.getElementById('ending-screen');
+  const gameScreen   = document.getElementById('game-screen');
+  gameScreen.classList.add('hidden');
+  endingScreen.classList.remove('hidden');
+  if (typeof renderEnding === 'function') {
+    renderEnding(type, state);
+  }
+}

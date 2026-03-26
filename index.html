@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>霧纏いし牢獄</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- タイトル画面 -->
+  <div id="title-screen">
+    <div class="mist-layer mist-1"></div>
+    <div class="mist-layer mist-2"></div>
+    <div class="mist-layer mist-3"></div>
+    <div class="title-content">
+      <svg class="title-svg" viewBox="0 0 320 120" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+          <linearGradient id="titleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#c8c0e8"/>
+            <stop offset="50%" style="stop-color:#7F77DD"/>
+            <stop offset="100%" style="stop-color:#534AB7"/>
+          </linearGradient>
+        </defs>
+        <text x="160" y="50" text-anchor="middle" font-family="'Noto Serif JP', serif"
+              font-size="22" fill="url(#titleGrad)" filter="url(#glow)"
+              letter-spacing="4">霧纏いし牢獄</text>
+        <text x="160" y="80" text-anchor="middle" font-family="serif"
+              font-size="11" fill="#534AB7" letter-spacing="8">MISTY PRISON</text>
+        <line x1="40" y1="92" x2="280" y2="92" stroke="#534AB7" stroke-width="0.5" opacity="0.6"/>
+        <text x="160" y="108" text-anchor="middle" font-family="'Noto Serif JP', serif"
+              font-size="8" fill="#534AB7" opacity="0.7" letter-spacing="2">グランブルーファンタジー 二次創作</text>
+      </svg>
+      <p class="title-sub">深い霧に包まれた牢獄から脱出せよ</p>
+      <button id="btn-start" onclick="startGame()">はじめる</button>
+    </div>
+  </div>
+
+  <!-- ゲーム画面 -->
+  <div id="game-screen" class="hidden">
+
+    <!-- シーンビュー -->
+    <div id="scene-view">
+      <div id="scene-label"></div>
+      <!-- SVGシーンがJSで描画される -->
+    </div>
+
+    <!-- 左右矢印ボタン -->
+    <button id="btn-left" class="nav-btn" onclick="navigateView('left')">&#9664;</button>
+    <button id="btn-right" class="nav-btn" onclick="navigateView('right')">&#9654;</button>
+
+    <!-- ダイアログエリア -->
+    <div id="dialog-area" class="hidden">
+      <div id="dialog-speaker"></div>
+      <div id="dialog-text"></div>
+      <div id="dialog-options"></div>
+      <button id="dialog-close" onclick="closeDialog()">閉じる</button>
+    </div>
+
+    <!-- インベントリバー -->
+    <div id="inventory-bar">
+      <div id="inventory-slots">
+        <div class="item-slot" id="slot-0" onclick="selectItem(0)"></div>
+        <div class="item-slot" id="slot-1" onclick="selectItem(1)"></div>
+        <div class="item-slot" id="slot-2" onclick="selectItem(2)"></div>
+        <div class="item-slot" id="slot-3" onclick="selectItem(3)"></div>
+        <div class="item-slot" id="slot-4" onclick="selectItem(4)"></div>
+        <div class="item-slot" id="slot-5" onclick="selectItem(5)"></div>
+        <div class="item-slot" id="slot-6" onclick="selectItem(6)"></div>
+        <div class="item-slot" id="slot-7" onclick="selectItem(7)"></div>
+      </div>
+      <div id="inventory-actions">
+        <button id="btn-combine" class="action-btn" onclick="tryCombine()" disabled>合成</button>
+        <button id="btn-hint" class="action-btn hint-btn" onclick="showHint()">ヒント</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- エンディング画面 -->
+  <div id="ending-screen" class="hidden"></div>
+
+  <script src="scenes.js"></script>
+  <script src="ending.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

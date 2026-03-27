@@ -10,14 +10,23 @@ const state = {
   inspected: {},
   selectedItems: [],
   flags: {
-    candleLit: false,
+    // アイテム取得
+    mistPaperTaken: false,
+    candleTaken: false,
+    oilJarTaken: false,
+    stoneFragmentTaken: false,
+    // 状態フラグ
     tabletRevealed: false,
     rubbingDone: false,
     overlayRead: false,
     windowIlluminated: false,
+    magicStoneRemoved: false,
+    // 扉
     symbolOrder: [],
     doorUnlocked: false,
-    corridorUnlocked: false,
+    // 回廊・ムィストラ
+    paintingsSeen: [],
+    allPaintingsSeen: false,
     muistraDialogue: 0,
     muistraAnswers: [],
   },
@@ -161,7 +170,7 @@ function loadScene(viewId) {
   if (label) label.textContent = VIEW_LABELS[viewId] || '';
 
   // ナビゲーションボタン制御
-  const isSpecial = viewId === 'corridor' || viewId === 'muistra';
+  const isSpecial = viewId === 'corridor' || viewId === 'muistora';
   document.getElementById('btn-left').style.display  = isSpecial ? 'none' : 'flex';
   document.getElementById('btn-right').style.display = isSpecial ? 'none' : 'flex';
 
@@ -182,229 +191,33 @@ function navigateView(direction) {
   loadScene(next);
 }
 
-// ===== スポットクリック処理 =====
+// ===== スポットクリック処理（scenes.js の spots に委譲） =====
 function handleSpotClick(spotId) {
   triggerSFX('item_use');
+  const scene = SCENES[state.currentView];
+  if (!scene || !scene.spots) return;
+  const spot = scene.spots.find(s => s.id === spotId);
+  if (!spot) { showDialog('特に何もない。'); return; }
 
-  // アイテムを持っていて使用モード
+  // アイテム使用モード（1個選択中）
   if (state.selectedItems.length === 1) {
     const itemId = state.selectedItems[0];
-    const used = tryUseItemOnSpot(itemId, spotId);
-    if (used) {
-      clearSelection();
-      return;
+    if (spot.canUse && spot.canUse(itemId)) {
+      spot.use(itemId);
+    } else {
+      const itemName = ITEMS[itemId] ? ITEMS[itemId].name : itemId;
+      showDialog(`${itemName}はここでは使えない。`);
     }
-  }
-
-  switch (spotId) {
-    // --- 正面 ---
-    case 'floor-candle':
-      addItem('candle');
-      showDialog('古い燭台を拾った。蝋が少し残っている。');
-      break;
-
-    case 'oil-bottle':
-      addItem('oil');
-      showDialog('小さな陶器の瓶を拾った。植物油が入っているようだ。');
-      break;
-
-    case 'torch-left':
-      if (state.flags.candleLit) {
-        showDialog('松明ブラケットに炎が揺れている。牢獄をほのかに照らす。');
-      } else {
-        showDialog('古い松明ブラケット。火はついていない。\n灯り燭台を使えば火を移せそうだ。');
-      }
-      break;
-
-    case 'lock':
-      if (state.flags.doorUnlocked) {
-        showDialog('錠前はすでに開いている。');
-      } else if (state.inventory.includes('old_key')) {
-        tryUseItemOnSpot('old_key', 'lock');
-      } else {
-        showDialog('頑丈な錠前だ。正しい鍵が必要だろう。\nまず記号の順序を解かなければならない。');
-      }
-      break;
-
-    case 'corridor-enter':
-      loadScene('corridor');
-      break;
-
-    // --- 左手 ---
-    case 'tablet':
-      inspectTablet();
-      break;
-
-    case 'charcoal-piece':
-      addItem('charcoal');
-      showDialog('炭の欠片を拾った。何かを写し取るのに使えそうだ。');
-      break;
-
-    case 'parchment-scroll':
-      addItem('parchment');
-      showDialog('古い羊皮紙を見つけた。薄くてしなやかだ。');
-      break;
-
-    case 'key-frag-a':
-      addItem('key_fragment1');
-      showDialog('壁の割れ目から鍵の欠片を見つけた。もう一つどこかにあるはずだ。');
-      break;
-
-    // --- 背面 ---
-    case 'window':
-      inspectWindow();
-      break;
-
-    case 'relief':
-      inspectRelief();
-      break;
-
-    case 'muistra-note':
-      addItem('muistra_note');
-      showDialog('ムイスタの手記を見つけた。\n「この牢獄の扉は三つの記号の順で開く。\n　石板の刻文に答えがある。炎で照らせ。」');
-      break;
-
-    // --- 右手 ---
-    case 'device':
-      if (state.flags.doorUnlocked) {
-        showDialog('装置は作動済みだ。');
-      } else {
-        showDialog('解錠装置。三つの記号を正しい順に入力せよ。\n石板の文字が順序を示しているようだ。');
-      }
-      break;
-
-    case 'key-frag-b':
-      addItem('key_fragment2');
-      showDialog('月光に輝く鍵の欠片を見つけた。欠片Aと合わさりそうだ。');
-      break;
-
-    case 'back-to-room':
-      loadScene('front');
-      break;
-
-    // --- 回廊 ---
-    case 'muistra-approach':
-      loadScene('muistra');
-      break;
-
-    // --- ムイスタ ---
-    case 'talk-muistra':
-      startMuistraDialogue();
-      break;
-
-    default:
-      showDialog('特に何もない。');
-  }
-}
-
-// ===== 石板調査 =====
-function inspectTablet() {
-  if (state.flags.rubbingDone) {
-    showDialog('石板の拓本はすでに取った。');
+    clearSelection();
     return;
   }
-  if (state.flags.candleLit) {
-    state.flags.tabletRevealed = true;
-    loadScene(state.currentView);
-    showDialog('燭台の炎で石板を照らすと、隠れていた文字が浮かび上がった！\n○　▲　◆\nこれが順序だ。');
-  } else {
-    showDialog('古い石板に刻まれた模様。霞んで読めない。\n炎で照らせば何か見えるかもしれない。');
-  }
+
+  spot.inspect();
 }
 
-// ===== 窓調査 =====
-function inspectWindow() {
-  if (state.flags.windowIlluminated) {
-    showDialog('月光が差し込んでいる。レリーフの何かが輝いている。');
-    return;
-  }
-  if (state.inventory.includes('candle_lit')) {
-    tryUseItemOnSpot('candle_lit', 'window');
-  } else {
-    showDialog('高い位置に小さな窓がある。月が見える。\n光を当てれば何か見えるかもしれない。');
-  }
-}
-
-// ===== レリーフ調査 =====
-function inspectRelief() {
-  if (!state.flags.windowIlluminated) {
-    showDialog('壁に刻まれた複雑なレリーフ。暗くてよく見えない。\n窓から光を当てれば……');
-    return;
-  }
-  if (state.inventory.includes('key_fragment2') || state.inventory.includes('old_key')) {
-    showDialog('レリーフが月光を反射している。鍵の欠片はすでに手に入れた。');
-  } else {
-    showDialog('月光が差し込み、レリーフの中心が輝いた。\n鍵の欠片が隠されていたようだ！');
-    addItem('key_fragment2');
-  }
-}
-
-// ===== アイテムをスポットに使用 =====
-function tryUseItemOnSpot(itemId, spotId) {
-  triggerSFX('item_use');
-
-  // 燭台_lit → 石板
-  if (itemId === 'candle_lit' && spotId === 'tablet') {
-    state.flags.tabletRevealed = true;
-    loadScene(state.currentView);
-    showDialog('炎で石板を照らすと、隠れていた記号が浮かび上がった！\n○　▲　◆\nこれが扉の解錠順だ。');
-    return true;
-  }
-
-  // 燭台_lit → 窓
-  if (itemId === 'candle_lit' && spotId === 'window') {
-    state.flags.windowIlluminated = true;
-    loadScene(state.currentView);
-    showDialog('燭台の炎を窓枠に近づけると、壁のレリーフに光が反射し何かが浮かび上がった！');
-    triggerSFX('correct');
-    return true;
-  }
-
-  // 燭台_lit → 松明
-  if (itemId === 'candle_lit' && spotId === 'torch-left') {
-    state.flags.candleLit = true;
-    loadScene(state.currentView);
-    showDialog('松明に炎を移した。牢獄が明るくなった。');
-    triggerSFX('correct');
-    return true;
-  }
-
-  // 古鍵 → 錠前
-  if (itemId === 'old_key' && spotId === 'lock') {
-    state.flags.doorUnlocked = true;
-    removeItem('old_key');
-    loadScene(state.currentView);
-    showDialog('錠前に鍵を差し込むと、重い音を立てて開いた。\n扉の先へ進める！');
-    triggerSFX('door_open');
-    return true;
-  }
-
-  // 炭 → 石板（拓本）
-  if (itemId === 'charcoal' && spotId === 'tablet') {
-    if (!state.inventory.includes('parchment')) {
-      showDialog('羊皮紙がなければ拓本は取れない。');
-      return true;
-    }
-    if (!state.flags.tabletRevealed && !state.flags.candleLit) {
-      showDialog('まず炎で石板の文字を浮かび上がらせる必要がある。');
-      return true;
-    }
-    removeItem('charcoal');
-    removeItem('parchment');
-    addItem('rubbing');
-    state.flags.rubbingDone = true;
-    loadScene(state.currentView);
-    showDialog('炭と羊皮紙で石板の模様を写し取った。拓本が完成した。');
-    triggerSFX('combine');
-    return true;
-  }
-
-  return false;
-}
-
-// ===== シンボル入力 =====
+// ===== シンボル入力（正面扉パネル） =====
 function handleSymbolInput(symbol) {
-  if (state.flags.doorUnlocked) return;
+  if (state.flags.magicStoneRemoved || state.flags.doorUnlocked) return;
   if (state.flags.symbolOrder.includes(symbol)) return;
 
   triggerSFX('item_use');
@@ -415,16 +228,16 @@ function handleSymbolInput(symbol) {
     const correct = ['○', '▲', '◆'];
     const isCorrect = state.flags.symbolOrder.every((s, i) => s === correct[i]);
     if (isCorrect) {
-      state.flags.corridorUnlocked = true;
-      state.flags.doorUnlocked = true;
+      state.flags.magicStoneRemoved = true;
       triggerSFX('correct');
       loadScene(state.currentView);
-      showDialog('正解！　装置が作動し、錠前が外れた。\n扉が開いている！');
+      showDialog('シンボルが正しい順に輝いた。窪みに何かをはめ込む形が現れた。\n扉の魔石が外れた——「扉の魔石」を手に入れた。');
+      setTimeout(() => addItem('magic_stone'), 500);
     } else {
       triggerSFX('wrong');
       state.flags.symbolOrder = [];
       loadScene(state.currentView);
-      showDialog('記号の順序が違う……装置がリセットされた。\n正しい順序を確認してからもう一度試そう。');
+      showDialog('順番が違うようだ……もう一度試そう。');
     }
   }
 }
@@ -435,47 +248,37 @@ function resetSymbolOrder() {
   loadScene(state.currentView);
 }
 
-// ===== ムイスタの対話 =====
-const MUISTRA_DIALOGUES = [
-  {
-    text: '……久しぶりに人の気配を感じた。\nここは霧の牢獄。迷い込んだ者は容易に出られぬ。\nお前も脱出を望むか？',
-    options: [
-      { text: '助けてほしい', next: 1 },
-      { text: '自分で出られる', next: 2 },
-    ],
-  },
-  {
-    text: '素直でよい。\n扉を開けるだけでは足りぬ。\n回廊の先に霧の核がある。それを砕けば霧は晴れる。\n……お前ならできる。行け。',
-    options: null,
-    onEnd: () => {
-      state.flags.muistraDialogue = 99;
-      state.flags.muistraAnswers.push('助け');
-      setTimeout(() => triggerEnding('good'), 1000);
-    },
-  },
-  {
-    text: 'フ……気概はある。\nだが霧の牢獄を侮るな。\n回廊の先で核を砕く。それが唯一の道だ。\n……ついてこい。',
-    options: null,
-    onEnd: () => {
-      state.flags.muistraDialogue = 99;
-      state.flags.muistraAnswers.push('自力');
-      setTimeout(() => triggerEnding('good'), 1000);
-    },
-  },
-];
-
+// ===== ムィストラの対話（MUISTRA_DIALOGUE は scenes.js で定義） =====
 function startMuistraDialogue() {
+  if (!state.flags.allPaintingsSeen) {
+    showDialog('……まず、私の記憶を見よ。', null, null, 'ムィストラ');
+    return;
+  }
   const idx = state.flags.muistraDialogue;
-  if (idx === 99) {
-    showDialog('ムイスタは静かに前を見つめている。');
+  if (idx >= MUISTRA_DIALOGUE.length) {
+    showDialog('ムィストラは静かに佇んでいる。', null, null, 'ムィストラ');
     return;
   }
-  if (idx >= MUISTRA_DIALOGUES.length) {
-    showDialog('ムイスタは何も言わない。');
-    return;
-  }
-  const dlg = MUISTRA_DIALOGUES[idx];
-  showDialog(dlg.text, dlg.options, dlg.onEnd, 'ムイスタ');
+  const dlg = MUISTRA_DIALOGUE[idx];
+  const options = dlg.choices.map(choice => ({
+    text: choice.text,
+    onClick: () => {
+      if (choice.correct) {
+        state.flags.muistraAnswers.push(choice.text);
+        const onCorrect = dlg.onCorrect || null;
+        showDialog(dlg.correct_response, null, () => {
+          state.flags.muistraDialogue++;
+          if (onCorrect) onCorrect();
+          else if (state.flags.muistraDialogue < MUISTRA_DIALOGUE.length) {
+            setTimeout(() => startMuistraDialogue(), 400);
+          }
+        }, 'ムィストラ');
+      } else {
+        showDialog(dlg.wrong_response, null, null, 'ムィストラ');
+      }
+    },
+  }));
+  showDialog(dlg.question, options, null, 'ムィストラ');
 }
 
 // ===== アイテム管理 =====
@@ -543,14 +346,12 @@ function tryCombine() {
   removeItem(recipe.inputs[0]);
   removeItem(recipe.inputs[1]);
 
-  // 特殊フラグ更新
-  if (recipe.output === 'candle_lit') state.flags.candleLit = true;
-  if (recipe.output === 'rubbing') state.flags.rubbingDone = true;
-  if (recipe.output === 'overlay') state.flags.overlayRead = true;
+  // onCombine コールバック（scenes.js のレシピで定義）
+  if (recipe.onCombine) recipe.onCombine();
 
   addItem(recipe.output);
   triggerSFX(recipe.sfx || 'combine');
-  showDialog(recipe.msg);
+  showDialog(recipe.message || recipe.msg || '合成した。');
   clearSelection();
   loadScene(state.currentView);
 }
@@ -604,7 +405,7 @@ function showDialog(text, options = null, onEnd = null, speaker = '') {
       clearInterval(typewriterTimer);
       typewriterTimer = null;
 
-      // 選択肢表示
+      // 選択肢表示（options: [{text, onClick}] 形式）
       if (options && options.length > 0) {
         closeBtn.style.display = 'none';
         options.forEach(opt => {
@@ -612,9 +413,8 @@ function showDialog(text, options = null, onEnd = null, speaker = '') {
           btn.className = 'dialog-option-btn';
           btn.textContent = opt.text;
           btn.onclick = () => {
-            state.flags.muistraDialogue = opt.next;
             closeDialog();
-            setTimeout(() => startMuistraDialogue(), 200);
+            if (opt.onClick) setTimeout(() => opt.onClick(), 100);
           };
           optEl.appendChild(btn);
         });

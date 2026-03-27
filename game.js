@@ -24,7 +24,7 @@ const state = {
     // 扉
     symbolOrder: [],
     doorUnlocked: false,
-    // 回廊・ムィストラ
+    // 回廊・ネブリア
     paintingsSeen: [],
     allPaintingsSeen: false,
     muistraDialogue: 0,
@@ -157,10 +157,10 @@ function startGame() {
 
 // ===== ストーリーイントロ =====
 const STORY_LINES = [
-  '気づいたとき、私は霧の中にいた。',
-  '石造りの牢獄。扉は固く閉ざされ、外の光はひとつも差し込まない。',
-  'ここがどこなのか……なぜ私がここにいるのか。',
-  '何も覚えていない。ただ、この霧だけが静かに揺れている。',
+  '気づいたとき、空が見えなかった。',
+  '浮遊する孤島の奥——霧に閉ざされた、古い祠の中。',
+  'グランサイファーとはぐれたのか……それとも、霧に引き込まれたのか。',
+  '何も覚えていない。ただ、この霧だけが生き物のように揺れている。',
   '——脱出しなければ。',
 ];
 
@@ -281,7 +281,7 @@ function handleSymbolInput(symbol) {
       state.flags.magicStoneRemoved = true;
       triggerSFX('correct');
       loadScene(state.currentView);
-      showDialog('シンボルが正しい順に輝いた。窪みに何かをはめ込む形が現れた。\n扉の魔石が外れた——「扉の魔石」を手に入れた。');
+      showDialog('シンボルが正しい順に輝いた。封印が緩み、星晶が扉からゆっくりと外れた。\n「封印星晶」を手に入れた。');
       setTimeout(() => addItem('magic_stone'), 500);
     } else {
       triggerSFX('wrong');
@@ -298,15 +298,15 @@ function resetSymbolOrder() {
   loadScene(state.currentView);
 }
 
-// ===== ムィストラの対話（MUISTRA_DIALOGUE は scenes.js で定義） =====
+// ===== ネブリアの対話（MUISTRA_DIALOGUE は scenes.js で定義） =====
 function startMuistraDialogue() {
   if (!state.flags.allPaintingsSeen) {
-    showDialog('……まず、私の記憶を見よ。', null, null, 'ムィストラ');
+    showDialog('……まず、私の記憶を見よ。', null, null, 'ネブリア');
     return;
   }
   const idx = state.flags.muistraDialogue;
   if (idx >= MUISTRA_DIALOGUE.length) {
-    showDialog('ムィストラは静かに佇んでいる。', null, null, 'ムィストラ');
+    showDialog('ネブリアは静かに佇んでいる。', null, null, 'ネブリア');
     return;
   }
   const dlg = MUISTRA_DIALOGUE[idx];
@@ -322,13 +322,13 @@ function startMuistraDialogue() {
           else if (state.flags.muistraDialogue < MUISTRA_DIALOGUE.length) {
             setTimeout(() => startMuistraDialogue(), 400);
           }
-        }, 'ムィストラ');
+        }, 'ネブリア');
       } else {
-        showDialog(dlg.wrong_response, null, null, 'ムィストラ');
+        showDialog(dlg.wrong_response, null, null, 'ネブリア');
       }
     },
   }));
-  showDialog(dlg.question, options, null, 'ムィストラ');
+  showDialog(dlg.question, options, null, 'ネブリア');
 }
 
 // ===== アイテム管理 =====
@@ -537,7 +537,7 @@ function closeDialog() {
 function showHint() {
   triggerSFX('item_use');
   const hint = getHint(); // scenes.js に定義
-  showDialog(`【ヒント】\n${hint}`, null, null, 'システム');
+  showDialog(`【ヒント】\n${hint}`, null, null, '星の羅針盤');
 }
 
 // ===== スワイプ検出 =====

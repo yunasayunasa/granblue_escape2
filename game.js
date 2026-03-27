@@ -143,14 +143,64 @@ function triggerSFX(type) {
 // ===== タイトル→ゲーム遷移 =====
 function startGame() {
   triggerSFX('correct');
-  const title = document.getElementById('title-screen');
-  const game  = document.getElementById('game-screen');
-  title.classList.add('hidden');
-  game.classList.remove('hidden');
-  state.currentScene = 'game';
-  state.currentView  = 'front';
-  loadScene('front');
-  setupSwipe();
+  document.getElementById('title-screen').classList.add('hidden');
+  showStoryIntro(() => {
+    const game = document.getElementById('game-screen');
+    game.classList.remove('hidden');
+    state.currentScene = 'game';
+    state.currentView  = 'front';
+    loadScene('front');
+    setupSwipe();
+    setupItemInteractions();
+  });
+}
+
+// ===== ストーリーイントロ =====
+const STORY_LINES = [
+  '気づいたとき、私は霧の中にいた。',
+  '石造りの牢獄。扉は固く閉ざされ、外の光はひとつも差し込まない。',
+  'ここがどこなのか……なぜ私がここにいるのか。',
+  '何も覚えていない。ただ、この霧だけが静かに揺れている。',
+  '——脱出しなければ。',
+];
+
+function showStoryIntro(onComplete) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'story-intro-wrap';
+  document.body.appendChild(wrapper);
+
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    wrapper.style.opacity = '1';
+  }));
+
+  setTimeout(() => showStoryLine(wrapper, 0, () => {
+    const btn = document.createElement('button');
+    btn.className = 'story-proceed-btn';
+    btn.textContent = '——扉の前に立つ';
+    btn.onclick = () => {
+      wrapper.style.opacity = '0';
+      setTimeout(() => { wrapper.remove(); onComplete(); }, 600);
+    };
+    wrapper.appendChild(btn);
+  }), 500);
+}
+
+function showStoryLine(wrapper, index, onAllDone) {
+  if (index >= STORY_LINES.length) { onAllDone(); return; }
+  const p = document.createElement('p');
+  p.className = 'story-line';
+  wrapper.appendChild(p);
+  requestAnimationFrame(() => requestAnimationFrame(() => { p.style.opacity = '1'; }));
+
+  let i = 0;
+  const tick = setInterval(() => {
+    if (i < STORY_LINES[index].length) {
+      p.textContent += STORY_LINES[index][i++];
+    } else {
+      clearInterval(tick);
+      setTimeout(() => showStoryLine(wrapper, index + 1, onAllDone), 650);
+    }
+  }, 70);
 }
 
 // ===== シーン読み込み =====
@@ -300,7 +350,11 @@ function removeItem(itemId) {
   renderInventory();
 }
 
+// 長押し判定フラグ（selectItem が誤発火しないよう）
+let _longPressJustFired = false;
+
 function selectItem(slotIndex) {
+  if (_longPressJustFired) { _longPressJustFired = false; return; }
   const itemId = state.inventory[slotIndex];
   if (!itemId) return;
 
@@ -378,6 +432,45 @@ function renderInventory() {
     }
   }
   document.getElementById('btn-combine').disabled = state.selectedItems.length !== 2;
+}
+
+// ===== アイテム詳細 (長押し) =====
+function showItemDetail(itemId) {
+  const item = ITEMS[itemId];
+  if (!item) return;
+  triggerSFX('item_use');
+  showDialog(`${item.name}\n\n${item.desc}`, null, null, `${item.emoji} アイテム`);
+}
+
+// ===== 長押し検出セットアップ (startGame で1回だけ呼ぶ) =====
+let _itemInteractionsReady = false;
+
+function setupItemInteractions() {
+  if (_itemInteractionsReady) return;
+  _itemInteractionsReady = true;
+
+  for (let i = 0; i < 8; i++) {
+    const slot = document.getElementById(`slot-${i}`);
+    if (!slot) continue;
+
+    let timer = null;
+
+    slot.addEventListener('pointerdown', () => {
+      timer = setTimeout(() => {
+        const itemId = state.inventory[i];
+        if (itemId) {
+          _longPressJustFired = true;
+          showItemDetail(itemId);
+        }
+        timer = null;
+      }, 500);
+    }, { passive: true });
+
+    const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
+    slot.addEventListener('pointerup',     cancel, { passive: true });
+    slot.addEventListener('pointercancel', cancel, { passive: true });
+    slot.addEventListener('pointermove',   cancel, { passive: true });
+  }
 }
 
 // ===== ダイアログ表示 =====

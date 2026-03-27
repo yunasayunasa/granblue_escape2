@@ -286,7 +286,7 @@ ${doorOpenSVG}
         label: '左の結晶群',
         inspect() {
           state.inspected['crystal_left'] = true;
-          if (state.inspected['crystal_left_count'] > 1) {
+          if (state.inspected['crystal_left_count'] >= 1) {
             showDialog('光の強さは ◆ > ▲ > ○ だ。');
           } else {
             state.inspected['crystal_left_count'] = (state.inspected['crystal_left_count'] || 0) + 1;
@@ -608,7 +608,6 @@ ${!fragTaken ? `
         use(itemId) {
           if (itemId === 'lit_candle') {
             state.flags.tabletRevealed = true;
-            triggerSFX('item_use');
             loadScene(state.currentView);
             showDialog('燭台の炎を近づけると、霧が晴れて石板の文字が浮かび上がった。「重ねれば 霧も晴れる」');
           } else if (itemId === 'mist_paper') {

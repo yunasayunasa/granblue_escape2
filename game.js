@@ -143,14 +143,64 @@ function triggerSFX(type) {
 // ===== タイトル→ゲーム遷移 =====
 function startGame() {
   triggerSFX('correct');
-  const title = document.getElementById('title-screen');
-  const game  = document.getElementById('game-screen');
-  title.classList.add('hidden');
-  game.classList.remove('hidden');
-  state.currentScene = 'game';
-  state.currentView  = 'front';
-  loadScene('front');
-  setupSwipe();
+  document.getElementById('title-screen').classList.add('hidden');
+  showStoryIntro(() => {
+    const game = document.getElementById('game-screen');
+    game.classList.remove('hidden');
+    state.currentScene = 'game';
+    state.currentView  = 'front';
+    loadScene('front');
+    setupSwipe();
+    setupItemInteractions();
+  });
+}
+
+// ===== ストーリーイントロ =====
+const STORY_LINES = [
+  '気づいたとき、私は霧の中にいた。',
+  '石造りの牢獄。扉は固く閉ざされ、外の光はひとつも差し込まない。',
+  'ここがどこなのか……なぜ私がここにいるのか。',
+  '何も覚えていない。ただ、この霧だけが静かに揺れている。',
+  '——脱出しなければ。',
+];
+
+function showStoryIntro(onComplete) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'story-intro-wrap';
+  document.body.appendChild(wrapper);
+
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    wrapper.style.opacity = '1';
+  }));
+
+  setTimeout(() => showStoryLine(wrapper, 0, () => {
+    const btn = document.createElement('button');
+    btn.className = 'story-proceed-btn';
+    btn.textContent = '——扉の前に立つ';
+    btn.onclick = () => {
+      wrapper.style.opacity = '0';
+      setTimeout(() => { wrapper.remove(); onComplete(); }, 600);
+    };
+    wrapper.appendChild(btn);
+  }), 500);
+}
+
+function showStoryLine(wrapper, index, onAllDone) {
+  if (index >= STORY_LINES.length) { onAllDone(); return; }
+  const p = document.createElement('p');
+  p.className = 'story-line';
+  wrapper.appendChild(p);
+  requestAnimationFrame(() => requestAnimationFrame(() => { p.style.opacity = '1'; }));
+
+  let i = 0;
+  const tick = setInterval(() => {
+    if (i < STORY_LINES[index].length) {
+      p.textContent += STORY_LINES[index][i++];
+    } else {
+      clearInterval(tick);
+      setTimeout(() => showStoryLine(wrapper, index + 1, onAllDone), 650);
+    }
+  }, 70);
 }
 
 // ===== シーン読み込み =====
@@ -179,7 +229,7 @@ function loadScene(viewId) {
 
 // ===== 視点移動 =====
 function navigateView(direction) {
-  if (state.currentView === 'corridor' || state.currentView === 'muistra') return;
+  if (state.currentView === 'corridor' || state.currentView === 'muistora') return;
   triggerSFX('item_use');
   const idx = VIEW_ORDER.indexOf(state.currentView);
   let next;
@@ -300,7 +350,11 @@ function removeItem(itemId) {
   renderInventory();
 }
 
+// 長押し判定フラグ（selectItem が誤発火しないよう）
+let _longPressJustFired = false;
+
 function selectItem(slotIndex) {
+  if (_longPressJustFired) { _longPressJustFired = false; return; }
   const itemId = state.inventory[slotIndex];
   if (!itemId) return;
 
@@ -349,8 +403,10 @@ function tryCombine() {
   // onCombine コールバック（scenes.js のレシピで定義）
   if (recipe.onCombine) recipe.onCombine();
 
-  addItem(recipe.output);
+  // addItem は item_get SFX を鳴らすため、combine SFX は addItem の後に上書き再生
+  state.inventory.push(recipe.output);
   triggerSFX(recipe.sfx || 'combine');
+  renderInventory();
   showDialog(recipe.message || recipe.msg || '合成した。');
   clearSelection();
   loadScene(state.currentView);
@@ -365,7 +421,7 @@ function renderInventory() {
     if (itemId) {
       const item = ITEMS[itemId];
       const isSelected = state.selectedItems.includes(itemId);
-      slot.innerHTML = `<span class="${isSelected ? '' : ''}">${item.emoji}</span>`;
+      slot.innerHTML = `<span>${item.emoji}</span>`;
       slot.classList.add('has-item');
       slot.classList.toggle('selected', isSelected);
       slot.title = item.name;
@@ -376,6 +432,45 @@ function renderInventory() {
     }
   }
   document.getElementById('btn-combine').disabled = state.selectedItems.length !== 2;
+}
+
+// ===== アイテム詳細 (長押し) =====
+function showItemDetail(itemId) {
+  const item = ITEMS[itemId];
+  if (!item) return;
+  triggerSFX('item_use');
+  showDialog(`${item.name}\n\n${item.desc}`, null, null, `${item.emoji} アイテム`);
+}
+
+// ===== 長押し検出セットアップ (startGame で1回だけ呼ぶ) =====
+let _itemInteractionsReady = false;
+
+function setupItemInteractions() {
+  if (_itemInteractionsReady) return;
+  _itemInteractionsReady = true;
+
+  for (let i = 0; i < 8; i++) {
+    const slot = document.getElementById(`slot-${i}`);
+    if (!slot) continue;
+
+    let timer = null;
+
+    slot.addEventListener('pointerdown', () => {
+      timer = setTimeout(() => {
+        const itemId = state.inventory[i];
+        if (itemId) {
+          _longPressJustFired = true;
+          showItemDetail(itemId);
+        }
+        timer = null;
+      }, 500);
+    }, { passive: true });
+
+    const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
+    slot.addEventListener('pointerup',     cancel, { passive: true });
+    slot.addEventListener('pointercancel', cancel, { passive: true });
+    slot.addEventListener('pointermove',   cancel, { passive: true });
+  }
 }
 
 // ===== ダイアログ表示 =====
@@ -441,72 +536,8 @@ function closeDialog() {
 // ===== ヒントシステム =====
 function showHint() {
   triggerSFX('item_use');
-  const hint = getHint();
+  const hint = getHint(); // scenes.js に定義
   showDialog(`【ヒント】\n${hint}`, null, null, 'システム');
-}
-
-function getHint() {
-  const f = state.flags;
-  const inv = state.inventory;
-
-  // エンディング後
-  if (f.muistraDialogue === 99) return 'ムイスタと話した。回廊の先へ進もう。';
-
-  // 基本収集フェーズ
-  if (!inv.includes('candle') && !f.candleLit)
-    return '正面の床に燭台が落ちている。拾ってみよう。';
-  if (!inv.includes('oil') && !f.candleLit)
-    return '正面の壁沿いに油瓶がある。燭台に注ぐことができるかも。';
-  if (inv.includes('candle') && inv.includes('oil') && !f.candleLit)
-    return '燭台と油瓶を選択して「合成」ボタンを押してみよう。';
-  if (!inv.includes('charcoal'))
-    return '左手の壁に炭の欠片がある。石板を写すのに使える。';
-  if (!inv.includes('parchment'))
-    return '左手の壁際に羊皮紙が落ちている。炭と組み合わせよう。';
-
-  // 石板フェーズ
-  if (f.candleLit && !f.tabletRevealed && inv.includes('candle_lit'))
-    return '火のついた燭台を持って、左手の石板に使ってみよう。';
-  if (!f.tabletRevealed && f.candleLit)
-    return '左手の石板に「灯り燭台」を使うと隠し文字が見えるかも。';
-  if (f.tabletRevealed && inv.includes('charcoal') && inv.includes('parchment'))
-    return '炭と羊皮紙を左手の石板に使って拓本を取ろう。';
-  if (f.tabletRevealed && !f.rubbingDone)
-    return '石板に炭を選択して使ってみよう（羊皮紙も必要）。';
-
-  // 透かし紙フェーズ
-  if (inv.includes('rubbing') && inv.includes('parchment') && !f.overlayRead)
-    return '拓本と羊皮紙を選択して「合成」すると、重ね合わせができるかも。';
-
-  // 窓・鍵フェーズ
-  if (!f.windowIlluminated && inv.includes('candle_lit'))
-    return '背面の窓に灯り燭台を使うと、壁のレリーフが見えるかも。';
-  if (!f.windowIlluminated)
-    return '背面の小窓を調べてみよう。灯りがあれば何か見えるはずだ。';
-
-  // 鍵の欠片
-  if (!inv.includes('key_fragment1') && !inv.includes('old_key'))
-    return '左手の壁の割れ目に鍵の欠片がある。';
-  if (!inv.includes('key_fragment2') && f.windowIlluminated && !inv.includes('old_key'))
-    return '背面のレリーフを調べてみよう。月光の中に何かが輝いている。';
-  if (inv.includes('key_fragment1') && inv.includes('key_fragment2') && !inv.includes('old_key'))
-    return '鍵の欠片AとBを選択して「合成」しよう。';
-
-  // シンボル入力フェーズ
-  if (!f.doorUnlocked && f.tabletRevealed && inv.includes('old_key'))
-    return '右手の解錠装置で、石板に書いてあった記号を順に入力しよう（○→▲→◆）。';
-  if (!f.doorUnlocked && f.tabletRevealed)
-    return '右手の解錠装置で記号を入力しよう。石板の順序は○→▲→◆だ。';
-  if (!f.doorUnlocked)
-    return '石板の記号の順序を確認して、右手の装置に入力しよう。';
-
-  // 扉開放後
-  if (f.doorUnlocked && !f.corridorUnlocked)
-    return '扉が開いた！正面から回廊へ進もう。';
-  if (f.corridorUnlocked && f.muistraDialogue < 99)
-    return '回廊を進むとムイスタがいる。話しかけてみよう。';
-
-  return '周囲をよく観察しよう。まだ見落としているものがあるかもしれない。';
 }
 
 // ===== スワイプ検出 =====

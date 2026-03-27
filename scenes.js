@@ -10,7 +10,7 @@ const ITEMS = {
   stone_fragment: { id: 'stone_fragment', name: '結晶片',           emoji: '🔮', desc: '特殊な形の結晶の破片' },
   rubbing:        { id: 'rubbing',        name: '石板の拓本',       emoji: '📋', desc: '石板の文字を写し取った紙' },
   overlay_sheet:  { id: 'overlay_sheet',  name: '重ね合わせの紙',   emoji: '✨', desc: '透かすと隠された文字が読める' },
-  magic_stone:    { id: 'magic_stone',    name: '扉の魔石',         emoji: '💎', desc: '扉から外れた魔力を帯びた石' },
+  magic_stone:    { id: 'magic_stone',    name: '封印星晶',         emoji: '💎', desc: '封印の扉から外れた古い星晶の欠片。かすかに脈動している' },
   crystal_key:    { id: 'crystal_key',    name: '結晶の鍵',         emoji: '🗝',  desc: '不思議な光を放つ結晶製の鍵' },
 };
 
@@ -32,7 +32,7 @@ const COMBINE_RECIPES = [
   {
     inputs: ['stone_fragment', 'magic_stone'],
     output: 'crystal_key',
-    message: '結晶片が魔石にはまり込み、鍵の形に変わった。「結晶の鍵」を手に入れた。',
+    message: '結晶片が封印星晶にはまり込み、鍵の形に変わった。「結晶の鍵」を手に入れた。',
     sfx: 'combine',
   },
 ];
@@ -45,7 +45,7 @@ const VIEW_LABELS = {
   back:     '後ろ壁 — 壺と石板',
   right:    '右壁 — 結晶と窓枠',
   corridor: '回廊',
-  muistora: 'ムィストラの間',
+  muistora: 'ネブリアの間',
 };
 
 // ===== MUISTRA_DIALOGUE =====
@@ -122,126 +122,209 @@ const SCENES = {
 
       return `<svg width="100%" viewBox="0 0 680 400" xmlns="http://www.w3.org/2000/svg">
 <style>
-@keyframes sc_m1{0%,100%{transform:translateX(0) scaleY(1)}50%{transform:translateX(22px) scaleY(1.08)}}
-@keyframes sc_m2{0%,100%{transform:translateX(0) scaleY(1)}50%{transform:translateX(-18px) scaleY(.94)}}
-@keyframes sc_m3{0%,100%{transform:translateX(0) translateY(0)}50%{transform:translateX(12px) translateY(-6px)}}
-@keyframes sc_pulse{0%,100%{opacity:.5}50%{opacity:1}}
-@keyframes sc_pulse2{0%,100%{opacity:.3}50%{opacity:.8}}
-@keyframes sc_glow{0%,100%{opacity:.6}50%{opacity:1}}
+@keyframes sc_tw  {0%,100%{opacity:.25}50%{opacity:.9}}
+@keyframes sc_pulse {0%,100%{opacity:.4}50%{opacity:.95}}
+@keyframes sc_pulse2{0%,100%{opacity:.22}50%{opacity:.7}}
+@keyframes sc_glow  {0%,100%{opacity:.55}50%{opacity:1}}
+@keyframes sc_float {0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes sc_mist  {0%,100%{transform:translateX(0)}50%{transform:translateX(18px)}}
 @media(prefers-reduced-motion:no-preference){
-.m1{animation:sc_m1 12s ease-in-out infinite}
-.m2{animation:sc_m2 9s ease-in-out infinite 1.5s}
-.m3{animation:sc_m3 15s ease-in-out infinite 3s}
-.m4{animation:sc_m1 11s ease-in-out infinite 2s}
-.m5{animation:sc_m2 14s ease-in-out infinite .5s}
-.gl{animation:sc_glow 3s ease-in-out infinite}
+.tw{animation:sc_tw 2.4s ease-in-out infinite}
 .pl{animation:sc_pulse 4s ease-in-out infinite}
-.pl2{animation:sc_pulse2 5s ease-in-out infinite 1s}}
+.pl2{animation:sc_pulse2 5s ease-in-out infinite 1s}
+.gl{animation:sc_glow 3s ease-in-out infinite}
+.fl{animation:sc_float 5s ease-in-out infinite}
+.ms{animation:sc_mist 14s ease-in-out infinite}}
 .hs{cursor:pointer}.ho{opacity:0;transition:opacity .18s}.hs:hover .ho{opacity:1}
 </style>
-<defs><clipPath id="scene"><rect width="680" height="400"/></clipPath>
-<linearGradient id="ceilg" x1="0" y1="0" x2="0" y2="1">
-<stop offset="0%" stop-color="#06040d"/><stop offset="100%" stop-color="#100c1e"/>
-</linearGradient></defs>
+<defs>
+<clipPath id="scene"><rect width="680" height="400"/></clipPath>
+<linearGradient id="skyg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#04020e"/><stop offset="100%" stop-color="#0c0920"/></linearGradient>
+<linearGradient id="ceilg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#09071a"/><stop offset="100%" stop-color="#0e0c22"/></linearGradient>
+<radialGradient id="sealglow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#534AB7" stop-opacity=".55"/><stop offset="100%" stop-color="#534AB7" stop-opacity="0"/></radialGradient>
+<radialGradient id="lantglow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#EF9F27" stop-opacity=".4"/><stop offset="100%" stop-color="#EF9F27" stop-opacity="0"/></radialGradient>
+<linearGradient id="pfade" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#7F77DD" stop-opacity=".3"/><stop offset="100%" stop-color="#534AB7" stop-opacity="0"/></linearGradient>
+</defs>
 <rect width="680" height="400" fill="#06040d"/>
-<polygon points="0,0 680,0 520,105 160,105" fill="url(#ceilg)"/>
-<polygon points="0,0 160,105 160,295 0,400" fill="#0d0b1a"/>
-<polygon points="680,0 520,105 520,295 680,400" fill="#0d0b1a"/>
-<polygon points="0,400 680,400 520,295 160,295" fill="#08060f"/>
-<rect x="160" y="105" width="360" height="190" fill="#0f0d1e"/>
-<!-- row1 --><rect x="160" y="105" width="58" height="34" fill="#131128" stroke="#0a0818" stroke-width=".5"/><rect x="218" y="105" width="44" height="34" fill="#141229" stroke="#0a0818" stroke-width=".5"/><rect x="262" y="105" width="52" height="34" fill="#121027" stroke="#0a0818" stroke-width=".5"/><rect x="314" y="105" width="48" height="34" fill="#13112a" stroke="#0a0818" stroke-width=".5"/><rect x="362" y="105" width="55" height="34" fill="#111026" stroke="#0a0818" stroke-width=".5"/><rect x="417" y="105" width="46" height="34" fill="#141229" stroke="#0a0818" stroke-width=".5"/><rect x="463" y="105" width="57" height="34" fill="#121128" stroke="#0a0818" stroke-width=".5"/>
-<!-- row2 --><rect x="160" y="139" width="46" height="32" fill="#111026" stroke="#0a0818" stroke-width=".5"/><rect x="206" y="139" width="60" height="32" fill="#13112a" stroke="#0a0818" stroke-width=".5"/><rect x="266" y="139" width="44" height="32" fill="#100f24" stroke="#0a0818" stroke-width=".5"/><rect x="310" y="139" width="58" height="32" fill="#141228" stroke="#0a0818" stroke-width=".5"/><rect x="368" y="139" width="48" height="32" fill="#12102a" stroke="#0a0818" stroke-width=".5"/><rect x="416" y="139" width="52" height="32" fill="#111027" stroke="#0a0818" stroke-width=".5"/><rect x="468" y="139" width="52" height="32" fill="#131228" stroke="#0a0818" stroke-width=".5"/>
-<!-- row3 --><rect x="160" y="171" width="54" height="30" fill="#12102a" stroke="#0a0818" stroke-width=".5"/><rect x="214" y="171" width="48" height="30" fill="#100f25" stroke="#0a0818" stroke-width=".5"/><rect x="262" y="171" width="56" height="30" fill="#141229" stroke="#0a0818" stroke-width=".5"/><rect x="318" y="171" width="44" height="30" fill="#111028" stroke="#0a0818" stroke-width=".5"/><rect x="362" y="171" width="60" height="30" fill="#13112b" stroke="#0a0818" stroke-width=".5"/><rect x="422" y="171" width="46" height="30" fill="#120f26" stroke="#0a0818" stroke-width=".5"/><rect x="468" y="171" width="52" height="30" fill="#141329" stroke="#0a0818" stroke-width=".5"/>
-<!-- row4-6 --><rect x="160" y="201" width="48" height="32" fill="#131029" stroke="#0a0818" stroke-width=".5"/><rect x="208" y="201" width="56" height="32" fill="#11102a" stroke="#0a0818" stroke-width=".5"/><rect x="264" y="201" width="42" height="32" fill="#130f27" stroke="#0a0818" stroke-width=".5"/><rect x="306" y="201" width="58" height="32" fill="#14122b" stroke="#0a0818" stroke-width=".5"/><rect x="364" y="201" width="50" height="32" fill="#100e25" stroke="#0a0818" stroke-width=".5"/><rect x="414" y="201" width="54" height="32" fill="#131128" stroke="#0a0818" stroke-width=".5"/><rect x="468" y="201" width="52" height="32" fill="#120f29" stroke="#0a0818" stroke-width=".5"/>
-<rect x="160" y="233" width="52" height="30" fill="#110f27" stroke="#0a0818" stroke-width=".5"/><rect x="212" y="233" width="44" height="30" fill="#14122a" stroke="#0a0818" stroke-width=".5"/><rect x="256" y="233" width="60" height="30" fill="#131028" stroke="#0a0818" stroke-width=".5"/><rect x="316" y="233" width="46" height="30" fill="#100f26" stroke="#0a0818" stroke-width=".5"/><rect x="362" y="233" width="54" height="30" fill="#14112b" stroke="#0a0818" stroke-width=".5"/><rect x="416" y="233" width="48" height="30" fill="#120f27" stroke="#0a0818" stroke-width=".5"/><rect x="464" y="233" width="56" height="30" fill="#131229" stroke="#0a0818" stroke-width=".5"/>
-<rect x="160" y="263" width="56" height="32" fill="#131128" stroke="#0a0818" stroke-width=".5"/><rect x="216" y="263" width="46" height="32" fill="#100e24" stroke="#0a0818" stroke-width=".5"/><rect x="262" y="263" width="54" height="32" fill="#13112a" stroke="#0a0818" stroke-width=".5"/><rect x="316" y="263" width="48" height="32" fill="#141229" stroke="#0a0818" stroke-width=".5"/><rect x="364" y="263" width="58" height="32" fill="#111027" stroke="#0a0818" stroke-width=".5"/><rect x="422" y="263" width="46" height="32" fill="#120f28" stroke="#0a0818" stroke-width=".5"/><rect x="468" y="263" width="52" height="32" fill="#14122a" stroke="#0a0818" stroke-width=".5"/>
+<!-- 夜空 開口部 -->
+<path d="M160,0 L160,108 Q340,-28 520,108 L520,0 Z" fill="url(#skyg)" clip-path="url(#scene)"/>
+<!-- 星 -->
+<circle cx="192" cy="30" r="1.3" fill="#d8d0f8" opacity=".65" class="tw"/>
+<circle cx="228" cy="14" r="1.5" fill="#fff" opacity=".5" class="tw" style="animation-delay:.45s"/>
+<circle cx="270" cy="44" r="1.0" fill="#b8b0e8" opacity=".55" class="tw" style="animation-delay:.9s"/>
+<circle cx="314" cy="20" r="1.2" fill="#e8e0ff" opacity=".48" class="tw" style="animation-delay:1.35s"/>
+<circle cx="340" cy="6"  r="1.7" fill="#fff" opacity=".42" class="tw" style="animation-delay:.2s"/>
+<circle cx="374" cy="34" r="1.1" fill="#d0c8f8" opacity=".52" class="tw" style="animation-delay:1.8s"/>
+<circle cx="412" cy="12" r="1.4" fill="#d8d0f8" opacity=".58" class="tw" style="animation-delay:.65s"/>
+<circle cx="454" cy="46" r="1.0" fill="#b0a8e0" opacity=".5"  class="tw" style="animation-delay:1.1s"/>
+<circle cx="492" cy="24" r="1.2" fill="#d0c8f8" opacity=".48" class="tw" style="animation-delay:.8s"/>
+<circle cx="244" cy="60" r="0.7" fill="#a0a0d8" opacity=".48" class="tw" style="animation-delay:2.1s"/>
+<circle cx="396" cy="68" r="0.6" fill="#a8a0e0" opacity=".42" class="tw" style="animation-delay:2.5s"/>
+<!-- 浮遊島 左 -->
+<g clip-path="url(#scene)">
+<path d="M168,77 Q200,56 238,60 Q255,56 270,77" fill="#07060e"/>
+<ellipse cx="218" cy="77" rx="52" ry="11" fill="#06040d"/>
+<path d="M172,77 Q195,87 218,85 Q244,87 266,77 Q258,92 218,90 Q178,92 172,77" fill="#06040e"/>
+<rect x="205" y="46" width="3" height="13" fill="#06040d"/><ellipse cx="206" cy="44" rx="8" ry="6" fill="#07060e"/>
+<rect x="222" y="50" width="2" height="9"  fill="#06040d"/><ellipse cx="223" cy="48" rx="5" ry="4" fill="#07060e"/>
+</g>
+<!-- 浮遊島 右 -->
+<g clip-path="url(#scene)">
+<path d="M428,66 Q455,48 474,51 Q493,48 510,66" fill="#07060e"/>
+<ellipse cx="469" cy="66" rx="42" ry="9" fill="#06040d"/>
+<path d="M432,66 Q454,76 469,74 Q486,76 506,66 Q500,80 469,78 Q438,80 432,66" fill="#06040e"/>
+<rect x="460" y="39" width="2" height="11" fill="#06040d"/><ellipse cx="461" cy="37" rx="7" ry="5" fill="#07060e"/>
+</g>
+<!-- 天井 -->
+<polygon points="0,0 680,0 520,108 160,108" fill="url(#ceilg)"/>
+<line x1="160" y1="108" x2="340" y2="30" stroke="#13102c" stroke-width="10" stroke-linecap="round"/>
+<line x1="520" y1="108" x2="340" y2="30" stroke="#13102c" stroke-width="10" stroke-linecap="round"/>
+<line x1="218" y1="88"  x2="462" y2="88"  stroke="#11102a" stroke-width="6"/>
+<line x1="268" y1="63"  x2="412" y2="63"  stroke="#0f0e28" stroke-width="4"/>
+<line x1="160" y1="108" x2="340" y2="30" stroke="#1e1a42" stroke-width="2" stroke-linecap="round"/>
+<line x1="520" y1="108" x2="340" y2="30" stroke="#1e1a42" stroke-width="2" stroke-linecap="round"/>
+<circle cx="340" cy="30" r="11" fill="#1a1840" stroke="#2e2660" stroke-width="1.5"/>
+<circle cx="340" cy="30" r="6"  fill="#24215c" stroke="#534AB7" stroke-width="1.2" class="gl"/>
+<circle cx="340" cy="30" r="2.5" fill="#7F77DD" opacity=".95" class="gl"/>
+<circle cx="218" cy="88" r="5" fill="#16143c" stroke="#2c2858" stroke-width="1"/>
+<circle cx="462" cy="88" r="5" fill="#16143c" stroke="#2c2858" stroke-width="1"/>
+<!-- 奥壁 -->
+<rect x="160" y="108" width="360" height="187" fill="#0e0c1e"/>
+<line x1="214" y1="108" x2="214" y2="295" stroke="#08061a" stroke-width="2.5"/>
+<line x1="268" y1="108" x2="268" y2="295" stroke="#08061a" stroke-width="2.5"/>
+<line x1="412" y1="108" x2="412" y2="295" stroke="#08061a" stroke-width="2.5"/>
+<line x1="466" y1="108" x2="466" y2="295" stroke="#08061a" stroke-width="2.5"/>
+<line x1="160" y1="150" x2="520" y2="150" stroke="#08061a" stroke-width="2"/>
+<line x1="160" y1="192" x2="520" y2="192" stroke="#08061a" stroke-width="2"/>
+<line x1="160" y1="234" x2="520" y2="234" stroke="#08061a" stroke-width="2"/>
+<line x1="160" y1="265" x2="520" y2="265" stroke="#08061a" stroke-width="1.5"/>
+<rect x="160" y="108" width="360" height="187" fill="#06040d" opacity=".16"/>
 <!-- 左右壁 -->
-<g clip-path="url(#scene)">
-<rect x="0" y="0" width="160" height="400" fill="#0c0a1c"/>
-<rect x="18" y="110" width="52" height="28" fill="#0f0d1e" stroke="#070614" stroke-width=".5"/><rect x="70" y="110" width="42" height="28" fill="#0e0c1d" stroke="#070614" stroke-width=".5"/><rect x="112" y="110" width="48" height="28" fill="#100e1f" stroke="#070614" stroke-width=".5"/>
-<rect x="18" y="138" width="44" height="30" fill="#0d0b1c" stroke="#070614" stroke-width=".5"/><rect x="62" y="138" width="56" height="30" fill="#0f0d1e" stroke="#070614" stroke-width=".5"/><rect x="118" y="138" width="42" height="30" fill="#0e0c1d" stroke="#070614" stroke-width=".5"/>
-<rect x="18" y="168" width="50" height="28" fill="#100d1f" stroke="#070614" stroke-width=".5"/><rect x="68" y="168" width="44" height="28" fill="#0c0b1c" stroke="#070614" stroke-width=".5"/><rect x="112" y="168" width="48" height="28" fill="#0f0d1e" stroke="#070614" stroke-width=".5"/>
-<rect x="18" y="196" width="42" height="30" fill="#0d0b1c" stroke="#070614" stroke-width=".5"/><rect x="60" y="196" width="58" height="30" fill="#100e1f" stroke="#070614" stroke-width=".5"/><rect x="118" y="196" width="42" height="30" fill="#0e0c1d" stroke="#070614" stroke-width=".5"/>
-<rect x="18" y="226" width="54" height="28" fill="#0f0d1e" stroke="#070614" stroke-width=".5"/><rect x="72" y="226" width="46" height="28" fill="#0d0b1c" stroke="#070614" stroke-width=".5"/><rect x="118" y="226" width="42" height="28" fill="#100e1f" stroke="#070614" stroke-width=".5"/>
-<rect x="18" y="254" width="46" height="30" fill="#0c0b1c" stroke="#070614" stroke-width=".5"/><rect x="64" y="254" width="54" height="30" fill="#0e0c1d" stroke="#070614" stroke-width=".5"/><rect x="118" y="254" width="42" height="30" fill="#0f0d1e" stroke="#070614" stroke-width=".5"/>
-<rect x="18" y="284" width="52" height="28" fill="#100d1f" stroke="#070614" stroke-width=".5"/><rect x="70" y="284" width="48" height="28" fill="#0d0b1c" stroke="#070614" stroke-width=".5"/><rect x="118" y="284" width="42" height="28" fill="#0f0e1e" stroke="#070614" stroke-width=".5"/>
+<polygon points="0,0 160,108 160,295 0,400" fill="#0c0a1c"/>
+<polygon points="680,0 520,108 520,295 680,400" fill="#0c0a1c"/>
+<!-- 左柱 -->
+<rect x="143" y="96" width="28" height="204" fill="#0f0d22" stroke="#1c183e" stroke-width="1.5"/>
+<rect x="146" y="96" width="5" height="204" fill="#1e1a48" opacity=".35"/>
+<rect x="164" y="96" width="3" height="204" fill="#06040d" opacity=".5"/>
+<polygon points="157,152 167,162 157,172 147,162" fill="#1a1740" stroke="#534AB7" stroke-width="1.2" class="gl"/><circle cx="157" cy="162" r="2.8" fill="#7F77DD" opacity=".88" class="gl"/>
+<polygon points="157,202 167,212 157,222 147,212" fill="#1a1740" stroke="#534AB7" stroke-width="1.2" class="pl"/><circle cx="157" cy="212" r="2.8" fill="#7F77DD" opacity=".78" class="pl"/>
+<polygon points="157,252 167,262 157,272 147,262" fill="#181538" stroke="#4a4298" stroke-width="1"   class="pl2"/><circle cx="157" cy="262" r="2.2" fill="#6058c8" opacity=".7" class="pl2"/>
+<rect x="143" y="96" width="28" height="60" fill="url(#pfade)" opacity=".5"/>
+<!-- 右柱 -->
+<rect x="509" y="96" width="28" height="204" fill="#0f0d22" stroke="#1c183e" stroke-width="1.5"/>
+<rect x="512" y="96" width="5" height="204" fill="#1e1a48" opacity=".35"/>
+<rect x="530" y="96" width="3" height="204" fill="#06040d" opacity=".5"/>
+<polygon points="523,152 533,162 523,172 513,162" fill="#1a1740" stroke="#534AB7" stroke-width="1.2" class="gl"/><circle cx="523" cy="162" r="2.8" fill="#7F77DD" opacity=".88" class="gl"/>
+<polygon points="523,202 533,212 523,222 513,212" fill="#1a1740" stroke="#534AB7" stroke-width="1.2" class="pl"/><circle cx="523" cy="212" r="2.8" fill="#7F77DD" opacity=".78" class="pl"/>
+<polygon points="523,252 533,262 523,272 513,262" fill="#181538" stroke="#4a4298" stroke-width="1"   class="pl2"/><circle cx="523" cy="262" r="2.2" fill="#6058c8" opacity=".7" class="pl2"/>
+<rect x="509" y="96" width="28" height="60" fill="url(#pfade)" opacity=".5"/>
+<!-- 浮遊灯篭 左 -->
+<g class="fl" transform="translate(70,190)">
+<line x1="0" y1="-34" x2="0" y2="-24" stroke="#2c2655" stroke-width="1"/>
+<rect x="-14" y="-24" width="28" height="36" rx="3" fill="#0e0c24" stroke="#2e2860" stroke-width="1.2"/>
+<rect x="-10" y="-20" width="20" height="28" rx="1" fill="#1a1432"/>
+<ellipse cx="0" cy="-6" rx="8" ry="10" fill="url(#lantglow)" class="gl"/>
+<circle  cx="0" cy="-6" r="4"   fill="#EF9F27" opacity=".5"  class="gl"/>
+<circle  cx="0" cy="-6" r="1.8" fill="#ffe8b0" opacity=".9"  class="gl"/>
+<path d="M-17,-24 L17,-24 L13,-31 L-13,-31 Z" fill="#13102a" stroke="#2e2860" stroke-width="1.2"/>
+<path d="M-17,-24 Q-20,-26 -22,-24" fill="none" stroke="#2e2860" stroke-width="1"/>
+<path d="M17,-24 Q20,-26 22,-24"    fill="none" stroke="#2e2860" stroke-width="1"/>
+<path d="M-9,12 L-11,21 M-3,12 L-3,22 M3,12 L3,22 M9,12 L11,21" stroke="#2a2455" stroke-width=".9"/>
 </g>
-<g clip-path="url(#scene)">
-<rect x="520" y="0" width="160" height="400" fill="#0c0a1c"/>
-<rect x="520" y="110" width="48" height="28" fill="#0f0d1e" stroke="#070614" stroke-width=".5"/><rect x="568" y="110" width="54" height="28" fill="#0e0c1d" stroke="#070614" stroke-width=".5"/><rect x="622" y="110" width="40" height="28" fill="#100e1f" stroke="#070614" stroke-width=".5"/>
-<rect x="520" y="138" width="42" height="30" fill="#0d0b1c" stroke="#070614" stroke-width=".5"/><rect x="562" y="138" width="58" height="30" fill="#0f0d1e" stroke="#070614" stroke-width=".5"/><rect x="620" y="138" width="42" height="30" fill="#0e0c1d" stroke="#070614" stroke-width=".5"/>
-<rect x="520" y="168" width="48" height="28" fill="#100d1f" stroke="#070614" stroke-width=".5"/><rect x="568" y="168" width="44" height="28" fill="#0c0b1c" stroke="#070614" stroke-width=".5"/><rect x="612" y="168" width="50" height="28" fill="#0f0d1e" stroke="#070614" stroke-width=".5"/>
-<rect x="520" y="196" width="42" height="30" fill="#0d0b1c" stroke="#070614" stroke-width=".5"/><rect x="562" y="196" width="56" height="30" fill="#100e1f" stroke="#070614" stroke-width=".5"/><rect x="618" y="196" width="44" height="30" fill="#0e0c1d" stroke="#070614" stroke-width=".5"/>
-<rect x="520" y="226" width="50" height="28" fill="#0f0d1e" stroke="#070614" stroke-width=".5"/><rect x="570" y="226" width="46" height="28" fill="#0d0b1c" stroke="#070614" stroke-width=".5"/><rect x="616" y="226" width="46" height="28" fill="#100e1f" stroke="#070614" stroke-width=".5"/>
-<rect x="520" y="254" width="44" height="30" fill="#0c0b1c" stroke="#070614" stroke-width=".5"/><rect x="564" y="254" width="54" height="30" fill="#0e0c1d" stroke="#070614" stroke-width=".5"/><rect x="618" y="254" width="44" height="30" fill="#0f0d1e" stroke="#070614" stroke-width=".5"/>
-<rect x="520" y="284" width="52" height="28" fill="#100d1f" stroke="#070614" stroke-width=".5"/><rect x="572" y="284" width="46" height="28" fill="#0d0b1c" stroke="#070614" stroke-width=".5"/><rect x="618" y="284" width="44" height="28" fill="#0f0e1e" stroke="#070614" stroke-width=".5"/>
+<!-- 浮遊灯篭 右 -->
+<g class="fl" style="animation-delay:2s" transform="translate(610,190)">
+<line x1="0" y1="-34" x2="0" y2="-24" stroke="#2c2655" stroke-width="1"/>
+<rect x="-14" y="-24" width="28" height="36" rx="3" fill="#0e0c24" stroke="#2e2860" stroke-width="1.2"/>
+<rect x="-10" y="-20" width="20" height="28" rx="1" fill="#1a1432"/>
+<ellipse cx="0" cy="-6" rx="8" ry="10" fill="url(#lantglow)" class="gl"/>
+<circle  cx="0" cy="-6" r="4"   fill="#EF9F27" opacity=".5"  class="gl"/>
+<circle  cx="0" cy="-6" r="1.8" fill="#ffe8b0" opacity=".9"  class="gl"/>
+<path d="M-17,-24 L17,-24 L13,-31 L-13,-31 Z" fill="#13102a" stroke="#2e2860" stroke-width="1.2"/>
+<path d="M-17,-24 Q-20,-26 -22,-24" fill="none" stroke="#2e2860" stroke-width="1"/>
+<path d="M17,-24 Q20,-26 22,-24"    fill="none" stroke="#2e2860" stroke-width="1"/>
+<path d="M-9,12 L-11,21 M-3,12 L-3,22 M3,12 L3,22 M9,12 L11,21" stroke="#2a2455" stroke-width=".9"/>
 </g>
-<rect x="160" y="105" width="360" height="190" fill="#1a1730" opacity=".08"/>
-<rect x="160" y="105" width="360" height="60" fill="#06040d" opacity=".4"/>
-<rect x="160" y="235" width="360" height="60" fill="#06040d" opacity=".3"/>
-<!-- 扉 -->
-<path d="M300,295 L300,183 Q300,148 340,148 Q380,148 380,183 L380,295 Z" fill="#09070f" stroke="#2e2658" stroke-width="2.5"/>
-<path d="M307,295 L307,186 Q307,158 340,158 Q373,158 373,186 L373,295 Z" fill="#07050e" stroke="#231e48" stroke-width="1"/>
-<rect x="307" y="195" width="30" height="44" rx="2" fill="#0b091a" stroke="#1e1a3a" stroke-width="1"/>
-<rect x="343" y="195" width="30" height="44" rx="2" fill="#0b091a" stroke="#1e1a3a" stroke-width="1"/>
-<rect x="307" y="247" width="30" height="40" rx="2" fill="#0b091a" stroke="#1e1a3a" stroke-width="1"/>
-<rect x="343" y="247" width="30" height="40" rx="2" fill="#0b091a" stroke="#1e1a3a" stroke-width="1"/>
-<path d="M307,186 Q307,158 340,158 Q373,158 373,186" fill="none" stroke="#3d3578" stroke-width="1.5"/>
-<path d="M309,188 Q309,163 340,163 Q371,163 371,188" fill="none" stroke="#534AB7" stroke-width=".8" opacity=".6"/>
-<ellipse cx="340" cy="182" rx="8" ry="8" fill="#0e0c1e" stroke="#534AB7" stroke-width="1.2"/>
-${!f.magicStoneRemoved ? `<circle cx="340" cy="182" r="4" fill="#534AB7" opacity=".7" class="gl"/><circle cx="340" cy="182" r="2" fill="#9f99e8" opacity=".9" class="gl"/>` : `<circle cx="340" cy="182" r="4" fill="#1a1530" stroke="#2e2658" stroke-width="1"/>`}
-<rect x="333" y="217" width="14" height="5" rx="2" fill="#2a244e"/>
-<circle cx="340" cy="230" r="4" fill="#1e1a3a" stroke="#534AB7" stroke-width=".8"/>
-<!-- 左結晶 -->
-<g transform="translate(38,140)"><polygon points="22,0 38,12 44,35 30,55 14,55 0,35 6,12" fill="#1e1a38" stroke="#3d3580" stroke-width="1"/><polygon points="22,0 38,12 22,28" fill="#2a2650" stroke="#4a4298" stroke-width=".8"/><polygon points="38,12 44,35 22,28" fill="#302a60" stroke="#534AB7" stroke-width=".8"/><circle cx="22" cy="28" r="2.5" fill="#7F77DD" opacity=".8" class="pl"/></g>
-<g transform="translate(68,175)"><polygon points="16,0 28,10 32,28 20,44 8,44 0,28 4,10" fill="#1a1632" stroke="#34308a" stroke-width=".8"/><polygon points="16,0 28,10 16,20" fill="#221e42" stroke="#4040a0" stroke-width=".7"/><circle cx="16" cy="20" r="2" fill="#6058c8" opacity=".7" class="pl2"/></g>
-<g transform="translate(20,208)"><polygon points="18,0 32,8 38,26 24,42 10,42 0,26 6,8" fill="#18143a" stroke="#2e2a70" stroke-width=".8"/><circle cx="18" cy="22" r="2" fill="#5050b8" opacity=".6" class="pl"/></g>
-<ellipse cx="68" cy="296" rx="52" ry="8" fill="#3d3598" opacity=".12" class="pl2"/>
-<!-- 右結晶 -->
-<g transform="translate(560,148)"><polygon points="18,0 34,10 40,32 24,52 12,52 0,32 4,10" fill="#201c3c" stroke="#403890" stroke-width="1"/><polygon points="18,0 34,10 18,26" fill="#2c2858" stroke="#504898" stroke-width=".8"/><polygon points="34,10 40,32 18,26" fill="#34306a" stroke="#5850b0" stroke-width=".8"/><circle cx="18" cy="26" r="3" fill="#7F77DD" opacity=".9" class="gl"/></g>
-<g transform="translate(590,178)"><polygon points="14,0 24,8 28,24 18,38 6,38 0,24 4,8" fill="#1c1838" stroke="#343088" stroke-width=".8"/><circle cx="14" cy="20" r="1.8" fill="#6058c8" opacity=".7" class="pl2"/></g>
-<g transform="translate(536,186)"><polygon points="20,0 36,10 40,30 26,48 10,48 0,30 6,10" fill="#1a1636" stroke="#302c7a" stroke-width=".8"/><circle cx="20" cy="24" r="2.5" fill="#7F77DD" opacity=".8" class="gl"/></g>
-<ellipse cx="600" cy="296" rx="50" ry="8" fill="#3d3598" opacity=".12" class="pl2"/>
+<!-- 封印の扉 鳥居型フレーム -->
+<path d="M260,146 Q340,135 420,146 L422,158 Q340,148 258,158 Z" fill="#131028" stroke="#2e2658" stroke-width="1.5"/>
+<path d="M260,146 Q340,135 420,146" fill="none" stroke="#3d3578" stroke-width=".9" opacity=".55"/>
+<text x="340" y="155" text-anchor="middle" font-size="9" fill="#534AB7" opacity=".6" font-family="sans-serif" letter-spacing="6">✦ ✧ ✦</text>
+<rect x="276" y="170" width="128" height="9" rx="1" fill="#121028" stroke="#2a2450" stroke-width="1.2"/>
+<rect x="288" y="146" width="12" height="149" rx="2" fill="#100e22" stroke="#2e2658" stroke-width="1.2"/>
+<rect x="290" y="146" width="4"  height="149" fill="#1e1a48" opacity=".4"/>
+<rect x="380" y="146" width="12" height="149" rx="2" fill="#100e22" stroke="#2e2658" stroke-width="1.2"/>
+<rect x="380" y="146" width="4"  height="149" fill="#1e1a48" opacity=".4"/>
+<rect x="288" y="146" width="12" height="149" fill="url(#pfade)" opacity=".6"/>
+<rect x="380" y="146" width="12" height="149" fill="url(#pfade)" opacity=".6"/>
+<rect x="300" y="179" width="80" height="116" rx="1" fill="#08060e" stroke="#26224c" stroke-width="2"/>
+<line x1="340" y1="179" x2="340" y2="295" stroke="#1c1838" stroke-width="1.5"/>
+<rect x="305" y="185" width="32" height="50" rx="1" fill="#0b091a" stroke="#1e1a38" stroke-width=".8"/>
+<rect x="343" y="185" width="32" height="50" rx="1" fill="#0b091a" stroke="#1e1a38" stroke-width=".8"/>
+<rect x="305" y="241" width="32" height="47" rx="1" fill="#0b091a" stroke="#1e1a38" stroke-width=".8"/>
+<rect x="343" y="241" width="32" height="47" rx="1" fill="#0b091a" stroke="#1e1a38" stroke-width=".8"/>
+<!-- 封印魔法陣 -->
+<circle cx="340" cy="226" r="30" fill="url(#sealglow)" class="pl"/>
+<circle cx="340" cy="226" r="26" fill="none" stroke="#2e2658" stroke-width="1.2" class="pl"/>
+<circle cx="340" cy="226" r="20" fill="none" stroke="#534AB7" stroke-width=".9" class="pl2"/>
+<circle cx="340" cy="226" r="14" fill="none" stroke="#3d3578" stroke-width=".6" class="pl"/>
+<polygon points="340,208 355,234 325,234" fill="none" stroke="#3d3578" stroke-width=".9" class="pl2"/>
+<polygon points="340,244 355,218 325,218" fill="none" stroke="#3d3578" stroke-width=".7" class="pl2"/>
+<circle cx="340" cy="226" r="6" fill="#1e1a3a" stroke="#534AB7" stroke-width="1.5"/>
+${!f.magicStoneRemoved ? `<circle cx="340" cy="226" r="3.5" fill="#534AB7" opacity=".82" class="gl"/><circle cx="340" cy="226" r="1.5" fill="#c8c0f8" opacity=".98" class="gl"/>` : `<circle cx="340" cy="226" r="3.5" fill="#1a1530" stroke="#2e2658" stroke-width="1"/>`}
+<rect x="334" y="250" width="12" height="5" rx="2" fill="#2a244e" stroke="#3d3578" stroke-width=".8"/>
+<!-- 結晶 左壁 -->
+<g transform="translate(22,152)"><polygon points="22,0 40,14 46,40 28,62 12,62 0,40 6,14" fill="#1c1838" stroke="#3a3480" stroke-width="1.2"/><polygon points="22,0 40,14 22,30" fill="#28244e" stroke="#48409a" stroke-width=".9"/><polygon points="40,14 46,40 22,30" fill="#2e285e" stroke="#534AB7" stroke-width=".9"/><circle cx="22" cy="30" r="3" fill="#7F77DD" opacity=".88" class="gl"/></g>
+<g transform="translate(58,204)"><polygon points="16,0 28,10 32,30 20,46 8,46 0,30 4,10" fill="#181430" stroke="#303080" stroke-width=".9"/><circle cx="16" cy="22" r="2.2" fill="#6058c8" opacity=".75" class="pl"/></g>
+<g transform="translate(12,226)"><polygon points="14,0 24,8 28,24 18,38 6,38 0,24 4,8" fill="#161230" stroke="#2c2870" stroke-width=".8"/><circle cx="14" cy="18" r="1.8" fill="#5050b8" opacity=".62" class="pl2"/></g>
+<!-- 結晶 右壁 -->
+<g transform="translate(556,150)"><polygon points="24,0 42,14 48,40 30,64 14,64 0,40 6,14" fill="#201c3c" stroke="#403890" stroke-width="1.2"/><polygon points="24,0 42,14 24,30" fill="#2c2858" stroke="#504898" stroke-width=".9"/><polygon points="42,14 48,40 24,30" fill="#343068" stroke="#5850b0" stroke-width=".9"/><circle cx="24" cy="30" r="3.5" fill="#7F77DD" opacity=".92" class="gl"/></g>
+<g transform="translate(598,202)"><polygon points="14,0 26,10 30,28 18,44 6,44 0,28 4,10" fill="#1c1838" stroke="#343088" stroke-width=".9"/><circle cx="14" cy="20" r="2" fill="#6058c8" opacity=".75" class="pl"/></g>
+<g transform="translate(556,224)"><polygon points="18,0 32,10 36,30 22,48 8,48 0,30 6,10" fill="#18143a" stroke="#2e2a74" stroke-width=".9"/><circle cx="18" cy="24" r="2.5" fill="#7F77DD" opacity=".82" class="gl"/></g>
+<!-- 床 -->
+<polygon points="0,400 680,400 520,295 160,295" fill="#08060f"/>
+<line x1="160" y1="316" x2="520" y2="316" stroke="#0d0b1c" stroke-width="1.2"/>
+<line x1="160" y1="338" x2="520" y2="338" stroke="#0d0b1c" stroke-width="1.2"/>
+<line x1="160" y1="360" x2="520" y2="360" stroke="#0d0b1c" stroke-width="1.2"/>
+<line x1="340" y1="295" x2="340" y2="400" stroke="#0d0b1c" stroke-width="1.2"/>
+<line x1="298" y1="295" x2="268" y2="400" stroke="#0d0b1c" stroke-width="1"/>
+<line x1="252" y1="295" x2="192" y2="400" stroke="#0d0b1c" stroke-width=".8"/>
+<line x1="382" y1="295" x2="412" y2="400" stroke="#0d0b1c" stroke-width="1"/>
+<line x1="428" y1="295" x2="488" y2="400" stroke="#0d0b1c" stroke-width=".8"/>
 <!-- 床の封印紋 -->
-<ellipse cx="340" cy="370" rx="90" ry="15" fill="none" stroke="#2e2860" stroke-width="1.5" class="pl"/>
-<ellipse cx="340" cy="370" rx="68" ry="11" fill="none" stroke="#534AB7" stroke-width=".8" class="pl2"/>
-<ellipse cx="340" cy="370" rx="46" ry="7" fill="none" stroke="#3d3598" stroke-width=".6" class="pl"/>
-<line x1="340" y1="355" x2="340" y2="385" stroke="#2e2860" stroke-width=".8" class="pl2"/>
-<line x1="250" y1="370" x2="430" y2="370" stroke="#2e2860" stroke-width=".8" class="pl2"/>
-<line x1="276" y1="352" x2="404" y2="388" stroke="#2a2458" stroke-width=".6" class="pl"/>
-<line x1="404" y1="352" x2="276" y2="388" stroke="#2a2458" stroke-width=".6" class="pl"/>
-<ellipse cx="340" cy="370" rx="8" ry="3" fill="#534AB7" opacity=".25" class="gl"/>
+<ellipse cx="340" cy="366" rx="96" ry="14" fill="none" stroke="#2a2460" stroke-width="1.5" class="pl"/>
+<ellipse cx="340" cy="366" rx="72" ry="10" fill="none" stroke="#534AB7" stroke-width=".9"  class="pl2"/>
+<ellipse cx="340" cy="366" rx="48" ry="7"  fill="none" stroke="#3d3598" stroke-width=".6"  class="pl"/>
+<line x1="340" y1="352" x2="340" y2="380" stroke="#2e2860" stroke-width=".8" class="pl2"/>
+<line x1="244" y1="366" x2="436" y2="366" stroke="#2e2860" stroke-width=".8" class="pl2"/>
+<line x1="272" y1="348" x2="408" y2="384" stroke="#28245a" stroke-width=".6" class="pl"/>
+<line x1="408" y1="348" x2="272" y2="384" stroke="#28245a" stroke-width=".6" class="pl"/>
+<ellipse cx="340" cy="366" rx="9" ry="3" fill="#534AB7" opacity=".22" class="gl"/>
 <!-- 霧 -->
-<g class="m1"><ellipse cx="340" cy="155" rx="195" ry="22" fill="#e8e0f8" opacity=".038"/></g>
-<g class="m2"><ellipse cx="220" cy="162" rx="148" ry="18" fill="#d8d0f0" opacity=".032"/></g>
-<g class="m1"><ellipse cx="340" cy="230" rx="182" ry="26" fill="#d0c8e8" opacity=".042"/></g>
-<g class="m3"><ellipse cx="340" cy="310" rx="210" ry="30" fill="#c0b8e0" opacity=".048"/></g>
-<g class="m4"><ellipse cx="340" cy="380" rx="230" ry="28" fill="#b8b0dc" opacity=".050"/></g>
-<g class="m3"><ellipse cx="68" cy="270" rx="100" ry="32" fill="#c8c0e4" opacity=".04"/></g>
-<g class="m4"><ellipse cx="612" cy="262" rx="95" ry="28" fill="#ccc4e8" opacity=".038"/></g>
+<g class="ms"><ellipse cx="260" cy="300" rx="148" ry="13" fill="#c8c0e8" opacity=".022"/></g>
+<g class="ms" style="animation-delay:-6s;animation-direction:reverse"><ellipse cx="420" cy="308" rx="160" ry="15" fill="#d0c8f0" opacity=".020"/></g>
+<ellipse cx="340" cy="294" rx="190" ry="10" fill="#534AB7" opacity=".038" class="pl2"/>
 <!-- 枠線 -->
-<line x1="160" y1="105" x2="160" y2="295" stroke="#06040d" stroke-width="3"/><line x1="520" y1="105" x2="520" y2="295" stroke="#06040d" stroke-width="3"/><line x1="160" y1="105" x2="520" y2="105" stroke="#06040d" stroke-width="3"/><line x1="160" y1="295" x2="520" y2="295" stroke="#06040d" stroke-width="3"/>
-<line x1="160" y1="105" x2="160" y2="295" stroke="#1a163a" stroke-width="1"/><line x1="520" y1="105" x2="520" y2="295" stroke="#1a163a" stroke-width="1"/>
+<line x1="160" y1="108" x2="160" y2="295" stroke="#06040d" stroke-width="3"/><line x1="520" y1="108" x2="520" y2="295" stroke="#06040d" stroke-width="3"/><line x1="160" y1="108" x2="520" y2="108" stroke="#06040d" stroke-width="3"/><line x1="160" y1="295" x2="520" y2="295" stroke="#06040d" stroke-width="3"/>
+<line x1="160" y1="108" x2="160" y2="295" stroke="#1e1a44" stroke-width="1"/><line x1="520" y1="108" x2="520" y2="295" stroke="#1e1a44" stroke-width="1"/>
 <!-- ホットスポット -->
 <g class="hs" onclick="handleSpotClick('door')">
-  <rect x="296" y="144" width="88" height="155" fill="#534AB7" opacity="0"/>
-  <rect x="296" y="144" width="88" height="155" fill="#7F77DD" class="ho" opacity=".08" rx="2"/>
+  <rect x="285" y="146" width="110" height="149" fill="#534AB7" opacity="0"/>
+  <rect x="285" y="146" width="110" height="149" fill="#7F77DD" class="ho" opacity=".08" rx="2"/>
 </g>
 <g class="hs" onclick="handleSpotClick('crystal_left')">
-  <rect x="15" y="130" width="130" height="165" fill="#534AB7" opacity="0"/>
-  <rect x="15" y="130" width="130" height="165" fill="#7F77DD" class="ho" opacity=".07"/>
+  <rect x="12" y="140" width="136" height="160" fill="#534AB7" opacity="0"/>
+  <rect x="12" y="140" width="136" height="160" fill="#7F77DD" class="ho" opacity=".07"/>
 </g>
 <g class="hs" onclick="handleSpotClick('crystal_right_front')">
-  <rect x="530" y="138" width="135" height="160" fill="#534AB7" opacity="0"/>
-  <rect x="530" y="138" width="135" height="160" fill="#7F77DD" class="ho" opacity=".07"/>
+  <rect x="532" y="140" width="136" height="160" fill="#534AB7" opacity="0"/>
+  <rect x="532" y="140" width="136" height="160" fill="#7F77DD" class="ho" opacity=".07"/>
 </g>
 <g class="hs" onclick="handleSpotClick('floor_rune')">
-  <ellipse cx="340" cy="370" rx="95" ry="22" fill="#534AB7" opacity="0"/>
-  <ellipse cx="340" cy="370" rx="95" ry="22" fill="#7F77DD" class="ho" opacity=".09"/>
+  <ellipse cx="340" cy="366" rx="100" ry="20" fill="#534AB7" opacity="0"/>
+  <ellipse cx="340" cy="366" rx="100" ry="20" fill="#7F77DD" class="ho" opacity=".09"/>
 </g>
 <g class="hs" onclick="handleSpotClick('ceiling_mist')">
-  <rect x="160" y="105" width="360" height="50" fill="#534AB7" opacity="0"/>
-  <rect x="160" y="105" width="360" height="50" fill="#7F77DD" class="ho" opacity=".06"/>
+  <path d="M190,0 L190,90 Q340,10 490,90 L490,0 Z" fill="#534AB7" opacity="0"/>
+  <path d="M190,0 L190,90 Q340,10 490,90 L490,0 Z" fill="#7F77DD" class="ho" opacity=".06"/>
 </g>
 ${symbolPanelSVG}
 ${doorOpenSVG}
@@ -255,7 +338,7 @@ ${doorOpenSVG}
           if (state.flags.doorUnlocked) {
             showDialog('鍵が開いている。先に進める。', [{ text: '→ 回廊へ進む', onClick: () => { closeDialog(); loadScene('corridor'); } }]);
           } else {
-            showDialog('古い石の扉。アーチに封印紋が刻まれ、中央の魔石が脈動している。錠前に特殊な形の鍵穴がある。');
+            showDialog('古い祠の扉。アーチに封印紋が刻まれ、中央の封印星晶が脈動している。錠前に特殊な形の鍵穴がある。');
           }
         },
         canUse(itemId) { return itemId === 'crystal_key' && !state.flags.doorUnlocked; },
@@ -672,7 +755,7 @@ ${!fragTaken ? `
 <line x1="200" y1="80" x2="480" y2="80" stroke="#1a163a" stroke-width="1.5"/>
 <line x1="200" y1="320" x2="480" y2="320" stroke="#1a163a" stroke-width="1.5"/>
 ${paintingSVGs}
-<!-- ムィストラの間へ -->
+<!-- ネブリアの間へ -->
 <g onclick="handleSpotClick('enter_muistora')" class="hs">
   <rect x="300" y="130" width="80" height="110" fill="#534AB7" opacity="0"/>
   <rect x="300" y="130" width="80" height="110" fill="#7F77DD" class="ho" opacity=".1" rx="2"/>
@@ -730,7 +813,7 @@ ${allSeen ? '' : `<text x="340" y="370" text-anchor="middle" font-size="10" fill
         },
       },
       {
-        id: 'enter_muistora', label: 'ムィストラの間へ',
+        id: 'enter_muistora', label: 'ネブリアの間へ',
         inspect() {
           if (!state.flags.allPaintingsSeen) {
             showDialog('……まず、私の記憶を見よ。\n（壁画を全て調べよう）');
@@ -772,7 +855,7 @@ ${allSeen ? '' : `<text x="340" y="370" text-anchor="middle" font-size="10" fill
 <circle cx="340" cy="200" r="80"  fill="none" stroke="#534AB7" stroke-width=".6" class="pl"/>
 <polygon points="340,72 428,256 252,256" fill="none" stroke="#2e2658" stroke-width=".8" class="pl2"/>
 <polygon points="340,328 252,144 428,144" fill="none" stroke="#2e2658" stroke-width=".6" class="pl"/>
-<!-- ムィストラの実体（霧の揺らぎ） -->
+<!-- ネブリアの実体（霧の揺らぎ） -->
 <g class="sc-float">
   <ellipse cx="340" cy="160" rx="52" ry="68" fill="#1e1840" opacity=".7"/>
   <ellipse cx="340" cy="160" rx="38" ry="52" fill="#28224e" opacity=".6"/>
@@ -789,7 +872,7 @@ ${allSeen ? '' : `<text x="340" y="370" text-anchor="middle" font-size="10" fill
   <ellipse cx="340" cy="160" rx="65" ry="80" fill="#534AB7" opacity=".06" class="pl2"/>
 </g>
 <!-- 名前 -->
-<text x="340" y="340" text-anchor="middle" font-size="13" fill="#7F77DD" letter-spacing="3" font-family="'Noto Serif JP',serif">ムィストラ</text>
+<text x="340" y="340" text-anchor="middle" font-size="13" fill="#7F77DD" letter-spacing="3" font-family="'Noto Serif JP',serif">ネブリア</text>
 <line x1="260" y1="348" x2="420" y2="348" stroke="#534AB7" stroke-width=".5" opacity=".6"/>
 <!-- 話しかけるボタン -->
 <g onclick="handleSpotClick('muistora_entity')" class="hs">
@@ -808,7 +891,7 @@ ${allSeen ? '' : `<text x="340" y="370" text-anchor="middle" font-size="10" fill
     spots: [
       {
         id: 'muistora_entity',
-        label: 'ムィストラ',
+        label: 'ネブリア',
         inspect() { startMuistraDialogue(); },
       },
       {
@@ -848,9 +931,9 @@ function getHint() {
   if (f.symbolOrder.length < 3)
     return '正面の扉のシンボルを ○→▲→◆ の順でタップしよう';
   if (!inv.includes('magic_stone'))
-    return '正面の扉を調べると魔石が外れるはずだ';
+    return '正面の扉を調べると封印星晶が外れるはずだ';
   if (!inv.includes('crystal_key'))
-    return 'インベントリで結晶片と扉の魔石を合成しよう';
+    return 'インベントリで結晶片と封印星晶を合成しよう';
   if (!f.doorUnlocked)
     return '結晶の鍵を扉に使おう';
   if (state.currentView !== 'corridor' && state.currentView !== 'muistora')
@@ -858,7 +941,7 @@ function getHint() {
   if (!f.allPaintingsSeen)
     return '回廊の壁画を全て調べよう（4枚）';
   if (f.muistraDialogue === 0)
-    return 'ムィストラに話しかけよう';
+    return 'ネブリアに話しかけよう';
   if (f.muistraDialogue === 1)
     return '第一の問い：迷子として素直に答えよう';
   if (f.muistraDialogue === 2)

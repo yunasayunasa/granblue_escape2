@@ -43,7 +43,7 @@ const FAREWELL_LINES = [
   '長い間、ここに閉じ込められていた',
   '……でも、もう一人じゃない',
   '行け。また、来い',
-  '——ムィストラの声が、遠くなっていく',
+  '——ネブリアの声が、遠くなっていく',
 ];
 
 function runPhase1(onComplete) {
@@ -252,7 +252,7 @@ function runPhase3(onComplete) {
         hero.style.opacity    = '1';
       }, 300);
     }
-    // ムィストラの欠片を遅れて追従
+    // ネブリアの欠片を遅れて追従
     const fragments = wrapper.querySelectorAll('.ep3-fragment');
     fragments.forEach((f, i) => {
       setTimeout(() => {
@@ -431,7 +431,7 @@ function buildSkySVG() {
   <circle cx="206" cy="350" r="2" fill="#7F77DD" opacity=".8"/>
 </g>`;
 
-  // ムィストラの欠片（霧の粒10個）
+  // ネブリアの欠片（霧の粒10個）
   const mistFragments = [
     { x: 172, y: 440, s: 1.0, d: 0.0, op: '0.7' },
     { x: 180, y: 432, s: 0.8, d: 0.2, op: '0.6' },
@@ -459,7 +459,7 @@ function buildSkySVG() {
 // ===== Phase 4: エンディングテキスト =====
 const ENDING_TEXTS = [
   { text: '霧纏いし牢獄　クリア', size: 'clamp(18px,5vw,26px)', weight: '700', spacing: '4px' },
-  { text: 'ムィストラはいつか、また誰かに出会うだろう', size: 'clamp(13px,3.5vw,17px)', weight: '400', spacing: '2px' },
+  { text: 'ネブリアはいつか、また誰かに出会うだろう', size: 'clamp(13px,3.5vw,17px)', weight: '400', spacing: '2px' },
   { text: '——そして今度は、自ら話しかけるかもしれない', size: 'clamp(12px,3vw,15px)', weight: '400', spacing: '1px' },
 ];
 

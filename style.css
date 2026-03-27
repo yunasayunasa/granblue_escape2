@@ -418,7 +418,11 @@ html, body {
   animation: fadeIn 0.5s ease;
 }
 
-/* スクロールバー */
+/* ===== SVGシーン用スタイル ===== */
+/* アニメは各SVGの<style>ブロック内でsc_プレフィクスで定義 */
+/* hs / ho はSVGインラインのため外部CSSより優先されない場合あり */
+
+/* ===== スクロールバー */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }

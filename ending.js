@@ -227,7 +227,7 @@ function openDoors(wrapper, onComplete) {
   }, 2400);
 }
 
-// ===== Phase 3: 空の世界SVG =====
+// ===== Phase 3: エンディング一枚絵 =====
 function runPhase3(onComplete) {
   const screen = document.getElementById('ending-screen');
   const wrapper = document.createElement('div');
@@ -235,38 +235,25 @@ function runPhase3(onComplete) {
   wrapper.style.cssText = [
     'position:fixed;inset:0;overflow:hidden;',
     'z-index:280;opacity:0;',
-    'background:linear-gradient(180deg,#87CEEB 0%,#b8e8f8 55%,#E0F4FF 100%);',
+    'background:#87CEEB;',
   ].join('');
 
-  const svgEl = buildSkySVG();
-  wrapper.appendChild(svgEl);
+  const img = document.createElement('img');
+  img.src = '無題134_20260328111447.jpeg';
+  img.style.cssText = [
+    'position:absolute;inset:0;',
+    'width:100%;height:100%;',
+    'object-fit:cover;object-position:center top;',
+  ].join('');
+  wrapper.appendChild(img);
   screen.appendChild(wrapper);
 
-  fadeIn(wrapper, 700, () => {
-    // 主人公を飛び出させる
-    const hero = wrapper.querySelector('#ep3-hero');
-    if (hero) {
-      setTimeout(() => {
-        hero.style.transition = 'transform 1.2s cubic-bezier(0.22,1,0.36,1), opacity 0.8s ease';
-        hero.style.transform  = 'translateY(0)';
-        hero.style.opacity    = '1';
-      }, 300);
-    }
-    // ネブリアの欠片を遅れて追従
-    const fragments = wrapper.querySelectorAll('.ep3-fragment');
-    fragments.forEach((f, i) => {
-      setTimeout(() => {
-        f.style.transition = 'transform 1.4s cubic-bezier(0.22,1,0.36,1), opacity 1s ease';
-        f.style.transform  = 'translateY(0)';
-        f.style.opacity    = f.dataset.maxOpacity || '0.7';
-      }, 700 + i * 100);
-    });
-    // 3.5秒後にフェードアウトせずそのまま表示継続（テキストを重ねる）
-    setTimeout(() => onComplete(), 3500);
+  fadeIn(wrapper, 900, () => {
+    setTimeout(() => onComplete(), 1800);
   });
 }
 
-function buildSkySVG() {
+function buildSkySVG_UNUSED() {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('viewBox', '0 0 400 700');
   svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
@@ -472,7 +459,7 @@ function runPhase4(onComplete) {
     'position:fixed;inset:0;',
     'display:flex;flex-direction:column;',
     'align-items:center;justify-content:flex-end;',
-    'padding-bottom:180px;gap:16px;',
+    'padding-bottom:120px;gap:20px;',
     'z-index:285;pointer-events:none;',
   ].join('');
   screen.appendChild(overlay);
@@ -493,8 +480,8 @@ function showEndingTextLines(container, index, onAllDone) {
     `font-size:${t.size};font-weight:${t.weight};`,
     `letter-spacing:${t.spacing};`,
     'font-family:"Noto Serif JP",serif;',
-    'color:#1a3048;text-align:center;margin:0;padding:0 24px;',
-    'text-shadow:0 1px 8px rgba(255,255,255,0.8);',
+    'color:#ffffff;text-align:center;margin:0;padding:0 24px;',
+    'text-shadow:0 0 4px rgba(0,0,0,1), 1px 1px 0 rgba(0,0,0,0.9), -1px -1px 0 rgba(0,0,0,0.9), 1px -1px 0 rgba(0,0,0,0.9), -1px 1px 0 rgba(0,0,0,0.9), 0 2px 12px rgba(0,0,0,0.8);',
     'opacity:0;transform:translateY(10px);',
     'transition:opacity 0.8s ease,transform 0.8s ease;',
   ].join('');

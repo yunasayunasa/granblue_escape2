@@ -993,11 +993,21 @@ function getHint() {
   if (state.currentView !== 'corridor' && state.currentView !== 'muistora')
     return '扉が開いた。先に進もう';
   if (!f.allPaintingsSeen) {
-    const cnt = (f.paintingOrder || []).length;
-    return cnt === 0
-      ? '回廊の壁画を物語の順にタップせよ（孤独→光→同行→飛躍）'
-      : `回廊の壁画を物語の順にタップせよ（${cnt}/4）`;
+    const order = f.paintingOrder || [];
+    const cnt = order.length;
+    const nextNames = ['孤独な影（左壁・上）', '遠くの光（左壁・下）', '並んで歩く2つの影（右壁・上）', '光の中へ飛び出す瞬間（右壁・下）'];
+    const correctIds = ['p1', 'p2', 'p3', 'p4'];
+    const nextIdx = correctIds.findIndex(id => !order.includes(id));
+    if (cnt === 0) {
+      return `四枚の壁画を物語の順にタップせよ\nまず「${nextNames[0]}」から`;
+    }
+    if (nextIdx >= 0) {
+      return `壁画（${cnt}/4 完了）\n次は「${nextNames[nextIdx]}」をタップせよ`;
+    }
+    return '四枚のタップが終わった。ダイアログを閉じて結果を確認しよう';
   }
+  if (state.currentView !== 'muistora')
+    return '奥のネブリアの間へ入ろう（回廊の突き当たり）';
   if (f.muistraDialogue === 0)
     return 'ネブリアに話しかけよう';
   if (f.muistraDialogue === 1)

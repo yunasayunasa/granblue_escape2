@@ -491,6 +491,18 @@ function showDialog(text, options = null, onEnd = null, speaker = '') {
   textEl.textContent = '';
   optEl.innerHTML    = '';
 
+  // 閉じるボタンを開始時点から設定する
+  // タイプライター途中で閉じても onEnd が確実に発火するよう
+  if (options && options.length > 0) {
+    closeBtn.style.display = 'none';
+    closeBtn.onclick = closeDialog;
+  } else {
+    closeBtn.style.display = 'block';
+    closeBtn.onclick = onEnd
+      ? () => { closeDialog(); onEnd(); }
+      : closeDialog;
+  }
+
   // タイプライター
   if (typewriterTimer) { clearInterval(typewriterTimer); typewriterTimer = null; }
   let i = 0;

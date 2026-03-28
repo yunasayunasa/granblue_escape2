@@ -25,7 +25,7 @@ const state = {
     symbolOrder: [],
     doorUnlocked: false,
     // 回廊・ネブリア
-    paintingsSeen: [],
+    paintingOrder: [],
     allPaintingsSeen: false,
     muistraDialogue: 0,
     muistraAnswers: [],

@@ -1,8 +1,12 @@
 // ===== ending.js Phase 3 =====
 'use strict';
 
+// ===== エンディング種別 =====
+let _endingType = 'good';
+
 // ===== エントリーポイント =====
 function renderEnding(type, gameState) {
+  _endingType = type || 'good';
   injectEndingStyles();
   const screen = document.getElementById('ending-screen');
   screen.innerHTML = '';
@@ -38,13 +42,27 @@ function fadeOut(el, duration, cb) {
 }
 
 // ===== Phase 1: 別れのテキスト =====
-const FAREWELL_LINES = [
-  '霧が、晴れていく',
-  '長い間、ここに閉じ込められていた',
-  '……でも、もう一人じゃない',
-  '行け。また、来い',
-  '——ネブリアの声が、遠くなっていく',
-];
+const FAREWELL_LINES = {
+  good: [
+    '霧が、晴れていく',
+    '長い間、ここに閉じ込められていた',
+    '……でも、もう一人じゃない',
+    '行け。また、来い',
+    '——ネブリアの声が、遠くなっていく',
+  ],
+  neutral: [
+    '霧が、晴れていく',
+    '……伝えてくれるか',
+    '誰かが、また来るかもしれない',
+    '——ネブリアの声が、聞こえた気がした',
+  ],
+  bad: [
+    '霧が、押し寄せてくる',
+    '——逃げなければ',
+    '振り返った時、扉はもうなかった',
+    '……あの問いの、答えは出ていない',
+  ],
+};
 
 function runPhase1(onComplete) {
   const screen = document.getElementById('ending-screen');
@@ -59,7 +77,8 @@ function runPhase1(onComplete) {
   screen.appendChild(wrapper);
 
   fadeIn(wrapper, 500, () => {
-    showFarewellLines(wrapper, 0, () => {
+    const lines = FAREWELL_LINES[_endingType] || FAREWELL_LINES.good;
+    showFarewellLines(wrapper, lines, 0, () => {
       // 最終行を少し見せてからフェードアウト
       setTimeout(() => {
         fadeOut(wrapper, 600, () => {
@@ -71,12 +90,12 @@ function runPhase1(onComplete) {
   });
 }
 
-function showFarewellLines(wrapper, index, onAllDone) {
-  if (index >= FAREWELL_LINES.length) {
+function showFarewellLines(wrapper, lines, index, onAllDone) {
+  if (index >= lines.length) {
     onAllDone();
     return;
   }
-  const line = FAREWELL_LINES[index];
+  const line = lines[index];
   const p = document.createElement('p');
   p.style.cssText = [
     'color:#c8c0e8;font-family:"Noto Serif JP",serif;',
@@ -94,7 +113,7 @@ function showFarewellLines(wrapper, index, onAllDone) {
     } else {
       clearInterval(tick);
       // フェードイン完了後、次の行へ
-      setTimeout(() => showFarewellLines(wrapper, index + 1, onAllDone), 700);
+      setTimeout(() => showFarewellLines(wrapper, lines, index + 1, onAllDone), 700);
     }
   }, 80);
 
@@ -246,6 +265,21 @@ function runPhase3(onComplete) {
     'object-fit:cover;object-position:center top;',
   ].join('');
   wrapper.appendChild(img);
+
+  // エンディング種別ごとの色調オーバーレイ
+  const tintColors = {
+    good:    'rgba(0,0,0,0)',
+    neutral: 'rgba(160,120,40,0.28)',
+    bad:     'rgba(0,0,20,0.55)',
+  };
+  const tint = document.createElement('div');
+  tint.style.cssText = [
+    'position:absolute;inset:0;',
+    `background:${tintColors[_endingType] || tintColors.good};`,
+    'pointer-events:none;',
+  ].join('');
+  wrapper.appendChild(tint);
+
   screen.appendChild(wrapper);
 
   fadeIn(wrapper, 900, () => {
@@ -444,11 +478,23 @@ function buildSkySVG_UNUSED() {
 }
 
 // ===== Phase 4: エンディングテキスト =====
-const ENDING_TEXTS = [
-  { text: '霧纏いし牢獄　クリア', size: 'clamp(18px,5vw,26px)', weight: '700', spacing: '4px' },
-  { text: 'ネブリアはいつか、また誰かに出会うだろう', size: 'clamp(13px,3.5vw,17px)', weight: '400', spacing: '2px' },
-  { text: '——そして今度は、自ら話しかけるかもしれない', size: 'clamp(12px,3vw,15px)', weight: '400', spacing: '1px' },
-];
+const ENDING_TEXTS = {
+  good: [
+    { text: '霧纏いし牢獄　クリア', size: 'clamp(18px,5vw,26px)', weight: '700', spacing: '4px' },
+    { text: 'ネブリアはいつか、また誰かに出会うだろう', size: 'clamp(13px,3.5vw,17px)', weight: '400', spacing: '2px' },
+    { text: '——そして今度は、自ら話しかけるかもしれない', size: 'clamp(12px,3vw,15px)', weight: '400', spacing: '1px' },
+  ],
+  neutral: [
+    { text: '霧纏いし牢獄　クリア', size: 'clamp(18px,5vw,26px)', weight: '700', spacing: '4px' },
+    { text: 'ネブリアは扉を開いた——誰かが伝えてくれることを、信じて', size: 'clamp(13px,3.5vw,17px)', weight: '400', spacing: '2px' },
+    { text: '——いつか、また誰かが来るかもしれない', size: 'clamp(12px,3vw,15px)', weight: '400', spacing: '1px' },
+  ],
+  bad: [
+    { text: '霧纏いし牢獄　脱出', size: 'clamp(18px,5vw,26px)', weight: '700', spacing: '4px' },
+    { text: '——ネブリアは、またひとりになった', size: 'clamp(13px,3.5vw,17px)', weight: '400', spacing: '2px' },
+    { text: 'あの問いの答えを、まだ持っていない', size: 'clamp(12px,3vw,15px)', weight: '400', spacing: '1px' },
+  ],
+};
 
 function runPhase4(onComplete) {
   const screen = document.getElementById('ending-screen');
@@ -464,17 +510,18 @@ function runPhase4(onComplete) {
   ].join('');
   screen.appendChild(overlay);
 
-  showEndingTextLines(overlay, 0, () => {
+  const texts = ENDING_TEXTS[_endingType] || ENDING_TEXTS.good;
+  showEndingTextLines(overlay, texts, 0, () => {
     setTimeout(onComplete, 1000);
   });
 }
 
-function showEndingTextLines(container, index, onAllDone) {
-  if (index >= ENDING_TEXTS.length) {
+function showEndingTextLines(container, texts, index, onAllDone) {
+  if (index >= texts.length) {
     onAllDone();
     return;
   }
-  const t = ENDING_TEXTS[index];
+  const t = texts[index];
   const p = document.createElement('p');
   p.style.cssText = [
     `font-size:${t.size};font-weight:${t.weight};`,
@@ -491,7 +538,7 @@ function showEndingTextLines(container, index, onAllDone) {
     p.style.opacity   = '1';
     p.style.transform = 'translateY(0)';
   }));
-  setTimeout(() => showEndingTextLines(container, index + 1, onAllDone), 1000);
+  setTimeout(() => showEndingTextLines(container, texts, index + 1, onAllDone), 1000);
 }
 
 // ===== Phase 5: リスタートボタン =====

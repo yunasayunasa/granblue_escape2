@@ -313,7 +313,10 @@ function startMuistraDialogue() {
   const options = dlg.choices.map(choice => ({
     text: choice.text,
     onClick: () => {
-      if (choice.correct) {
+      if (choice.onSelect) {
+        // 選択肢固有のハンドラ（分岐エンディング等）
+        choice.onSelect();
+      } else if (choice.correct) {
         state.flags.muistraAnswers.push(choice.text);
         const onCorrect = dlg.onCorrect || null;
         showDialog(dlg.correct_response, null, () => {

@@ -454,7 +454,7 @@ ${!candleTaken ? `
   <rect x="0" y="0" width="50" height="80" fill="#534AB7" opacity="0" class="ho" rx="2"/>
 </g>
 <!-- 霧 -->
-<rect x="0" y="80" width="680" height="240" fill="#1a1730" opacity=".06"/>
+<rect x="0" y="80" width="680" height="240" fill="#1a1730" opacity=".06" pointer-events="none"/>
 </svg>`;
     },
     spots: [
@@ -550,7 +550,7 @@ ${!fragTaken ? `
   <polygon points="0,20 30,0 60,8 70,30 50,44 20,44" fill="#1a1830" stroke="#2e2658" stroke-width="1" opacity=".5"/>
   <text x="28" y="48" font-size="12" fill="#1D9E75">✓</text>
 </g>`}
-<rect x="0" y="80" width="680" height="240" fill="#1a1730" opacity=".05"/>
+<rect x="0" y="80" width="680" height="240" fill="#1a1730" opacity=".05" pointer-events="none"/>
 </svg>`;
     },
     spots: [
@@ -654,9 +654,9 @@ ${!fragTaken ? `
   <rect x="-4" y="-8" width="80" height="90" fill="#534AB7" opacity="0" class="ho"/>
 </g>
 <!-- 霧 -->
-<g class="m2"><ellipse cx="340" cy="140" rx="200" ry="30" fill="#c8c0e8" opacity=".035"/></g>
-<g class="m2"><ellipse cx="340" cy="220" rx="180" ry="28" fill="#c0b8e0" opacity=".040"/></g>
-<rect x="0" y="80" width="680" height="240" fill="#1a1730" opacity=".05"/>
+<g class="m2" pointer-events="none"><ellipse cx="340" cy="140" rx="200" ry="30" fill="#c8c0e8" opacity=".035"/></g>
+<g class="m2" pointer-events="none"><ellipse cx="340" cy="220" rx="180" ry="28" fill="#c0b8e0" opacity=".040"/></g>
+<rect x="0" y="80" width="680" height="240" fill="#1a1730" opacity=".05" pointer-events="none"/>
 </svg>`;
     },
     spots: [
@@ -701,7 +701,6 @@ ${!fragTaken ? `
             showDialog('燭台の炎を近づけると、霧が晴れて石板の文字が浮かび上がった。「重ねれば 霧も晴れる」');
           } else if (itemId === 'mist_paper') {
             state.flags.rubbingDone = true;
-            removeItem('mist_paper');
             addItem('rubbing');
             triggerSFX('combine');
             loadScene(state.currentView);

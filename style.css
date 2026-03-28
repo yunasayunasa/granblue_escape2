@@ -221,7 +221,10 @@ html, body {
 
 /* ダイアログエリア */
 #dialog-area {
-  position: relative;
+  position: fixed;
+  bottom: 72px;
+  left: 0;
+  right: 0;
   background: var(--dialog-bg);
   border-top: 1px solid var(--accent);
   padding: 16px;

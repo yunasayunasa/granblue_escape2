@@ -421,6 +421,7 @@ ${doorOpenSVG}
 <rect x="0" y="204" width="88" height="32" fill="#110f27" stroke="#0a0818" stroke-width=".5"/><rect x="88" y="204" width="96" height="32" fill="#14122a" stroke="#0a0818" stroke-width=".5"/><rect x="184" y="204" width="80" height="32" fill="#131028" stroke="#0a0818" stroke-width=".5"/><rect x="264" y="204" width="100" height="32" fill="#100f26" stroke="#0a0818" stroke-width=".5"/><rect x="364" y="204" width="96" height="32" fill="#14112b" stroke="#0a0818" stroke-width=".5"/><rect x="460" y="204" width="80" height="32" fill="#120f27" stroke="#0a0818" stroke-width=".5"/><rect x="540" y="204" width="140" height="32" fill="#131229" stroke="#0a0818" stroke-width=".5"/>
 <rect x="0" y="236" width="96" height="30" fill="#131128" stroke="#0a0818" stroke-width=".5"/><rect x="96" y="236" width="80" height="30" fill="#100e24" stroke="#0a0818" stroke-width=".5"/><rect x="176" y="236" width="104" height="30" fill="#13112a" stroke="#0a0818" stroke-width=".5"/><rect x="280" y="236" width="88" height="30" fill="#141229" stroke="#0a0818" stroke-width=".5"/><rect x="368" y="236" width="96" height="30" fill="#111027" stroke="#0a0818" stroke-width=".5"/><rect x="464" y="236" width="80" height="30" fill="#120f28" stroke="#0a0818" stroke-width=".5"/><rect x="544" y="236" width="136" height="30" fill="#14122a" stroke="#0a0818" stroke-width=".5"/>
 <rect x="0" y="266" width="88" height="32" fill="#12102a" stroke="#0a0818" stroke-width=".5"/><rect x="88" y="266" width="96" height="32" fill="#100f25" stroke="#0a0818" stroke-width=".5"/><rect x="184" y="266" width="80" height="32" fill="#141229" stroke="#0a0818" stroke-width=".5"/><rect x="264" y="266" width="104" height="32" fill="#111028" stroke="#0a0818" stroke-width=".5"/><rect x="368" y="266" width="80" height="32" fill="#13112b" stroke="#0a0818" stroke-width=".5"/><rect x="448" y="266" width="96" height="32" fill="#120f26" stroke="#0a0818" stroke-width=".5"/><rect x="544" y="266" width="136" height="32" fill="#141329" stroke="#0a0818" stroke-width=".5"/>
+<g onclick="handleSpotClick('crystal_group_left')" class="hs">
 <!-- 結晶群（大） -->
 <g transform="translate(80,100)"><polygon points="28,0 50,16 58,46 38,72 18,72 0,46 8,16" fill="#1e1a38" stroke="#3d3580" stroke-width="1.2"/><polygon points="28,0 50,16 28,36" fill="#2a2650" stroke="#4a4298" stroke-width=".9"/><polygon points="28,0 8,16 28,36" fill="#251f4a" stroke="#3d3580" stroke-width=".9"/><polygon points="50,16 58,46 28,36" fill="#302a60" stroke="#534AB7" stroke-width=".9"/><polygon points="8,16 0,46 28,36" fill="#26204c" stroke="#3d3580" stroke-width=".9"/><circle cx="28" cy="36" r="3" fill="#7F77DD" opacity=".85" class="gl"/></g>
 <!-- 結晶群（中） -->
@@ -428,6 +429,8 @@ ${doorOpenSVG}
 <!-- 結晶群（小） -->
 <g transform="translate(128,178)"><polygon points="12,0 22,8 26,22 16,34 6,34 0,22 4,8" fill="#181436" stroke="#2e2a80" stroke-width=".8"/><circle cx="12" cy="18" r="1.8" fill="#5050b8" opacity=".65" class="pl2"/></g>
 <ellipse cx="148" cy="320" rx="70" ry="10" fill="#3d3598" opacity=".1" class="pl2"/>
+<rect x="60" y="88" width="160" height="260" fill="#534AB7" opacity="0" class="ho"/>
+</g>
 <!-- 壁掛け燭台 -->
 ${!candleTaken ? `
 <g onclick="handleSpotClick('old_candle')" class="hs" transform="translate(380,110)">
@@ -512,11 +515,14 @@ ${!candleTaken ? `
 <rect x="0" y="204" width="96" height="32" fill="#110f27" stroke="#0a0818" stroke-width=".5"/><rect x="96" y="204" width="80" height="32" fill="#14122a" stroke="#0a0818" stroke-width=".5"/><rect x="176" y="204" width="96" height="32" fill="#131028" stroke="#0a0818" stroke-width=".5"/><rect x="272" y="204" width="88" height="32" fill="#100f26" stroke="#0a0818" stroke-width=".5"/><rect x="360" y="204" width="104" height="32" fill="#14112b" stroke="#0a0818" stroke-width=".5"/><rect x="464" y="204" width="80" height="32" fill="#120f27" stroke="#0a0818" stroke-width=".5"/><rect x="544" y="204" width="136" height="32" fill="#131229" stroke="#0a0818" stroke-width=".5"/>
 <rect x="0" y="236" width="88" height="32" fill="#131128" stroke="#0a0818" stroke-width=".5"/><rect x="88" y="236" width="96" height="32" fill="#100e24" stroke="#0a0818" stroke-width=".5"/><rect x="184" y="236" width="80" height="32" fill="#13112a" stroke="#0a0818" stroke-width=".5"/><rect x="264" y="236" width="104" height="32" fill="#141229" stroke="#0a0818" stroke-width=".5"/><rect x="368" y="236" width="88" height="32" fill="#111027" stroke="#0a0818" stroke-width=".5"/><rect x="456" y="236" width="96" height="32" fill="#120f28" stroke="#0a0818" stroke-width=".5"/><rect x="552" y="236" width="128" height="32" fill="#14122a" stroke="#0a0818" stroke-width=".5"/>
 <rect x="0" y="268" width="96" height="28" fill="#12102a" stroke="#0a0818" stroke-width=".5"/><rect x="96" y="268" width="80" height="28" fill="#100f25" stroke="#0a0818" stroke-width=".5"/><rect x="176" y="268" width="104" height="28" fill="#141229" stroke="#0a0818" stroke-width=".5"/><rect x="280" y="268" width="88" height="28" fill="#111028" stroke="#0a0818" stroke-width=".5"/><rect x="368" y="268" width="96" height="28" fill="#13112b" stroke="#0a0818" stroke-width=".5"/><rect x="464" y="268" width="80" height="28" fill="#120f26" stroke="#0a0818" stroke-width=".5"/><rect x="544" y="268" width="136" height="28" fill="#141329" stroke="#0a0818" stroke-width=".5"/>
+<g onclick="handleSpotClick('crystal_group_right')" class="hs">
 <!-- 結晶群（明るく） -->
 <g transform="translate(480,95)"><polygon points="28,0 50,16 56,44 36,68 16,68 0,44 8,16" fill="#241e42" stroke="#4840b0" stroke-width="1.2"/><polygon points="28,0 50,16 28,34" fill="#342e62" stroke="#6058d0" stroke-width=".9"/><polygon points="28,0 8,16 28,34" fill="#2e2858" stroke="#5850c0" stroke-width=".9"/><polygon points="50,16 56,44 28,34" fill="#3c3670" stroke="#6860d8" stroke-width=".9"/><circle cx="28" cy="34" r="3.5" fill="#9f99e8" opacity=".95" class="gl"/></g>
 <g transform="translate(540,130)"><polygon points="20,0 36,12 40,34 26,52 10,52 0,34 6,12" fill="#201c40" stroke="#4040a8" stroke-width=".9"/><polygon points="20,0 36,12 20,26" fill="#2c2860" stroke="#5050c0" stroke-width=".8"/><circle cx="20" cy="26" r="2.8" fill="#8880d8" opacity=".9" class="pl"/></g>
 <g transform="translate(510,165)"><polygon points="14,0 26,8 30,26 18,40 8,40 0,26 4,8" fill="#1c1838" stroke="#3838a0" stroke-width=".8"/><circle cx="14" cy="20" r="2" fill="#7070c8" opacity=".8" class="pl2"/></g>
 <ellipse cx="530" cy="320" rx="72" ry="10" fill="#4840b0" opacity=".15" class="pl"/>
+<rect x="468" y="84" width="200" height="260" fill="#534AB7" opacity="0" class="ho"/>
+</g>
 <!-- 窓枠の跡（凹み） -->
 <g onclick="handleSpotClick('window_frame')" class="hs">
   <rect x="250" y="100" width="160" height="130" rx="4" fill="#0a0818" stroke="${illuminated?'#EF9F27':'#2e2658'}" stroke-width="${illuminated?'2':'1.5'}"/>
@@ -733,7 +739,7 @@ ${!fragTaken ? `
           ${p.id==='p3' ? `<ellipse cx="${p.x+p.w/2-10}" cy="${p.y+p.h/2+8}" rx="8" ry="24" fill="#1a1530" opacity=".9"/><ellipse cx="${p.x+p.w/2+10}" cy="${p.y+p.h/2+8}" rx="8" ry="24" fill="#2a1e40" opacity=".9"/>` : ''}
           ${p.id==='p4' ? `<ellipse cx="${p.x+p.w/2}" cy="${p.y+12}" rx="24" ry="24" fill="#EF9F27" opacity=".12"/><ellipse cx="${p.x+p.w/2-4}" cy="${p.y+p.h/2+8}" rx="9" ry="22" fill="#1a1530" opacity=".8"/>` : ''}
           <text x="${p.x+p.w/2}" y="${p.y+p.h+14}" text-anchor="middle" font-size="8" fill="${p.seen?'#7F77DD':'#534AB7'}" font-family="sans-serif">${p.title}</text>
-          ${!p.seen ? `<text x="${p.x+p.w}" y="${p.y}" font-size="16" fill="#EF9F27">!</text>` : `<text x="${p.x+p.w-8}" y="${p.y+14}" font-size="12" fill="#1D9E75">✓</text>`}
+          ${!p.seen ? `<text x="${p.x+p.w-18}" y="${p.y+16}" font-size="16" fill="#EF9F27">!</text>` : `<text x="${p.x+p.w-20}" y="${p.y+16}" font-size="12" fill="#1D9E75">✓</text>`}
           <rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" fill="#534AB7" opacity="0" class="ho" rx="2"/>
         </g>`).join('');
       return `<svg width="100%" viewBox="0 0 680 400" xmlns="http://www.w3.org/2000/svg">

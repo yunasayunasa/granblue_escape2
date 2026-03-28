@@ -61,7 +61,7 @@ const MUISTRA_DIALOGUE = [
     wrong_response:   '「……違う。もう一度、考えよ」',
   },
   {
-    question: '「長い孤独の中で……お前が最も恐れるものは、何だ」',
+    question: '「あの壁の「孤独な影」……長い孤独の中で、お前が最も恐れるものは、何だ」',
     choices: [
       { text: '「死ぬことだ」',               correct: false },
       { text: '「痛みだ」',                   correct: false },
@@ -71,7 +71,7 @@ const MUISTRA_DIALOGUE = [
     wrong_response:   '「……違う。壁画をもう一度、見よ」',
   },
   {
-    question: '「もし私が扉を開けたなら……お前はどうする」',
+    question: '「二つの影が並んで歩く……もし私が扉を開けたなら、お前はどうする」',
     choices: [
       { text: '「すぐに逃げる」',             correct: false },
       { text: '「また来る。今度は話をしに」', correct: true  },
@@ -82,6 +82,22 @@ const MUISTRA_DIALOGUE = [
     onCorrect: () => { triggerEnding('good'); },
   },
 ];
+
+// ===== 絵画順序チェック =====
+function checkPaintingOrder() {
+  const correct = ['p1', 'p2', 'p3', 'p4'];
+  const order = state.flags.paintingOrder || [];
+  const isCorrect = order.length === 4 && order.every((p, i) => p === correct[i]);
+  if (isCorrect) {
+    state.flags.allPaintingsSeen = true;
+    loadScene('corridor');
+    showDialog('四枚の絵が正しい物語の順に並んだ。\n奥の扉に青い光が宿る……', null, null, '回廊');
+  } else {
+    state.flags.paintingOrder = [];
+    loadScene('corridor');
+    showDialog('……絵の順序が違う。もう一度、物語の流れを感じよ。', null, null, '回廊');
+  }
+}
 
 // ===== SCENES =====
 const SCENES = {
@@ -721,28 +737,36 @@ ${!fragTaken ? `
   corridor: {
     label: VIEW_LABELS.corridor,
     render(state) {
-      const seen = state.flags.paintingsSeen || [];
+      const paintingOrder = state.flags.paintingOrder || [];
       const allSeen = state.flags.allPaintingsSeen;
       const paintingData = [
-        { id: 'p1', x: 40,  y: 100, w: 120, h: 90,  side: 'L', title: '孤独な影',           seen: seen.includes('p1') },
-        { id: 'p2', x: 40,  y: 210, w: 120, h: 90,  side: 'L', title: '遠くの光',           seen: seen.includes('p2') },
-        { id: 'p3', x: 520, y: 100, w: 120, h: 90,  side: 'R', title: '並んで歩く2つの影', seen: seen.includes('p3') },
-        { id: 'p4', x: 520, y: 210, w: 120, h: 90,  side: 'R', title: '光の中へ飛び出す瞬間', seen: seen.includes('p4') },
+        { id: 'p1', x: 40,  y: 100, w: 120, h: 90, title: '孤独な影',              orderNum: paintingOrder.indexOf('p1') + 1 },
+        { id: 'p2', x: 40,  y: 210, w: 120, h: 90, title: '遠くの光',              orderNum: paintingOrder.indexOf('p2') + 1 },
+        { id: 'p3', x: 520, y: 100, w: 120, h: 90, title: '並んで歩く2つの影',    orderNum: paintingOrder.indexOf('p3') + 1 },
+        { id: 'p4', x: 520, y: 210, w: 120, h: 90, title: '光の中へ飛び出す瞬間', orderNum: paintingOrder.indexOf('p4') + 1 },
       ];
+      // indexOf returns -1 if not found, +1 makes it 0 (= not selected), or 1-4
       const paintingSVGs = paintingData.map(p => `
         <g onclick="handleSpotClick('${p.id}')" class="hs">
-          <rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="2" fill="#0c0a1e" stroke="${p.seen?'#534AB7':'#2e2658'}" stroke-width="${p.seen?'1.5':'1'}"/>
+          <rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="2" fill="#0c0a1e" stroke="${p.orderNum>0?'#534AB7':'#2e2658'}" stroke-width="${p.orderNum>0?'1.5':'1'}"/>
           <rect x="${p.x+4}" y="${p.y+4}" width="${p.w-8}" height="${p.h-8}" fill="#08060f"/>
           ${p.id==='p1' ? `<ellipse cx="${p.x+p.w/2}" cy="${p.y+p.h/2+10}" rx="12" ry="28" fill="#1a1530" opacity=".9"/><ellipse cx="${p.x+p.w/2}" cy="${p.y+12}" rx="8" ry="8" fill="#1a1530" opacity=".8"/>` : ''}
           ${p.id==='p2' ? `<ellipse cx="${p.x+p.w/2}" cy="${p.y+24}" rx="18" ry="18" fill="#534AB7" opacity=".15"/><ellipse cx="${p.x+p.w/2}" cy="${p.y+24}" rx="8" ry="8" fill="#7F77DD" opacity=".25"/>` : ''}
           ${p.id==='p3' ? `<ellipse cx="${p.x+p.w/2-10}" cy="${p.y+p.h/2+8}" rx="8" ry="24" fill="#1a1530" opacity=".9"/><ellipse cx="${p.x+p.w/2+10}" cy="${p.y+p.h/2+8}" rx="8" ry="24" fill="#2a1e40" opacity=".9"/>` : ''}
           ${p.id==='p4' ? `<ellipse cx="${p.x+p.w/2}" cy="${p.y+12}" rx="24" ry="24" fill="#EF9F27" opacity=".12"/><ellipse cx="${p.x+p.w/2-4}" cy="${p.y+p.h/2+8}" rx="9" ry="22" fill="#1a1530" opacity=".8"/>` : ''}
-          <text x="${p.x+p.w/2}" y="${p.y+p.h+14}" text-anchor="middle" font-size="8" fill="${p.seen?'#7F77DD':'#534AB7'}" font-family="sans-serif">${p.title}</text>
-          ${!p.seen ? `<text x="${p.x+p.w-18}" y="${p.y+16}" font-size="16" fill="#EF9F27">!</text>` : `<text x="${p.x+p.w-20}" y="${p.y+16}" font-size="12" fill="#1D9E75">✓</text>`}
+          <text x="${p.x+p.w/2}" y="${p.y+p.h+14}" text-anchor="middle" font-size="8" fill="${p.orderNum>0?'#7F77DD':'#534AB7'}" font-family="sans-serif">${p.title}</text>
+          ${p.orderNum > 0
+            ? `<rect x="${p.x+p.w-22}" y="${p.y+2}" width="18" height="18" rx="3" fill="#534AB7" opacity=".9"/>
+               <text x="${p.x+p.w-13}" y="${p.y+15}" text-anchor="middle" font-size="12" fill="#fff" font-family="sans-serif" font-weight="bold">${p.orderNum}</text>`
+            : `<text x="${p.x+p.w-18}" y="${p.y+16}" font-size="16" fill="#EF9F27">!</text>`}
           <rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" fill="#534AB7" opacity="0" class="ho" rx="2"/>
         </g>`).join('');
       return `<svg width="100%" viewBox="0 0 680 400" xmlns="http://www.w3.org/2000/svg">
-<style>.hs{cursor:pointer}.ho{opacity:0;transition:opacity .18s}.hs:hover .ho{opacity:1}</style>
+<style>
+@keyframes sc_pulse{0%,100%{opacity:.5}50%{opacity:1}}
+@media(prefers-reduced-motion:no-preference){.pl{animation:sc_pulse 4s ease-in-out infinite}}
+.hs{cursor:pointer}.ho{opacity:0;transition:opacity .18s}.hs:hover .ho{opacity:1}
+</style>
 <rect width="680" height="400" fill="#06040d"/>
 <!-- 回廊パース -->
 <polygon points="0,0 200,80 200,320 0,400" fill="#0d0b1a"/>
@@ -751,9 +775,9 @@ ${!fragTaken ? `
 <polygon points="0,0 680,0 480,80 200,80" fill="#09070f"/>
 <polygon points="0,400 680,400 480,320 200,320" fill="#08060f"/>
 <!-- 奥の扉 -->
-<rect x="300" y="130" width="80" height="110" rx="3" fill="#07050e" stroke="#2e2658" stroke-width="1.5"/>
+<rect x="300" y="130" width="80" height="110" rx="3" fill="${allSeen?'#0a081e':'#07050e'}" stroke="${allSeen?'#534AB7':'#2e2658'}" stroke-width="${allSeen?'2':'1.5'}"/>
 <path d="M308,130 Q340,118 372,130" fill="none" stroke="#534AB7" stroke-width="1"/>
-<circle cx="340" cy="185" r="4" fill="#534AB7" opacity=".5"/>
+<circle cx="340" cy="185" r="${allSeen?'7':'4'}" fill="#534AB7" opacity="${allSeen?'.75':'.5'}" ${allSeen?'class="pl"':''}/>
 <!-- 壁の装飾ライン -->
 <line x1="200" y1="80" x2="200" y2="320" stroke="#1a163a" stroke-width="1.5"/>
 <line x1="480" y1="80" x2="480" y2="320" stroke="#1a163a" stroke-width="1.5"/>
@@ -765,63 +789,55 @@ ${paintingSVGs}
   <rect x="300" y="130" width="80" height="110" fill="#534AB7" opacity="0"/>
   <rect x="300" y="130" width="80" height="110" fill="#7F77DD" class="ho" opacity=".1" rx="2"/>
 </g>
-${allSeen ? '' : `<text x="340" y="370" text-anchor="middle" font-size="10" fill="#534AB7" opacity=".7" font-family="sans-serif">壁画を全て調べよ（${seen.length}/4）</text>`}
+${!allSeen ? `<text x="340" y="370" text-anchor="middle" font-size="10" fill="#534AB7" opacity=".7" font-family="sans-serif">絵画を物語の順にタップせよ（${paintingOrder.length}/4）</text>` : ''}
 </svg>`;
     },
     spots: [
       {
         id: 'p1', label: '壁画：孤独な影',
         inspect() {
-          if (!state.flags.paintingsSeen) state.flags.paintingsSeen = [];
-          if (!state.flags.paintingsSeen.includes('p1')) {
-            state.flags.paintingsSeen.push('p1');
-            if (state.flags.paintingsSeen.length >= 4) state.flags.allPaintingsSeen = true;
-            loadScene(state.currentView);
-          }
-          showDialog('【壁画：孤独な影】\n霧の中に一人佇む影が描かれている。誰かを待っているようにも、諦めているようにも見える。孤独の重さが伝わってくる。');
+          if (!state.flags.paintingOrder) state.flags.paintingOrder = [];
+          const order = state.flags.paintingOrder;
+          if (!order.includes('p1')) { order.push('p1'); loadScene('corridor'); }
+          const isLast = order.length === 4 && !state.flags.allPaintingsSeen;
+          showDialog('【壁画：孤独な影】\n霧の中に一人佇む影が描かれている。誰かを待っているようにも、諦めているようにも見える。孤独の重さが伝わってくる。', null, isLast ? checkPaintingOrder : null);
         },
       },
       {
         id: 'p2', label: '壁画：遠くの光',
         inspect() {
-          if (!state.flags.paintingsSeen) state.flags.paintingsSeen = [];
-          if (!state.flags.paintingsSeen.includes('p2')) {
-            state.flags.paintingsSeen.push('p2');
-            if (state.flags.paintingsSeen.length >= 4) state.flags.allPaintingsSeen = true;
-            loadScene(state.currentView);
-          }
-          showDialog('【壁画：遠くの光】\n深い霧の奥に、かすかな光の点が描かれている。届かない距離にある希望——あるいは、記憶の中の何かのようだ。');
+          if (!state.flags.paintingOrder) state.flags.paintingOrder = [];
+          const order = state.flags.paintingOrder;
+          if (!order.includes('p2')) { order.push('p2'); loadScene('corridor'); }
+          const isLast = order.length === 4 && !state.flags.allPaintingsSeen;
+          showDialog('【壁画：遠くの光】\n深い霧の奥に、かすかな光の点が描かれている。届かない距離にある希望——あるいは、記憶の中の何かのようだ。', null, isLast ? checkPaintingOrder : null);
         },
       },
       {
         id: 'p3', label: '壁画：並んで歩く2つの影',
         inspect() {
-          if (!state.flags.paintingsSeen) state.flags.paintingsSeen = [];
-          if (!state.flags.paintingsSeen.includes('p3')) {
-            state.flags.paintingsSeen.push('p3');
-            if (state.flags.paintingsSeen.length >= 4) state.flags.allPaintingsSeen = true;
-            loadScene(state.currentView);
-          }
-          showDialog('【壁画：並んで歩く2つの影】\n二つの影が並んで霧の中を歩いている。一方は霧の存在、もう一方は迷い込んだ者——長い孤独の果てに、やっと誰かがいる。');
+          if (!state.flags.paintingOrder) state.flags.paintingOrder = [];
+          const order = state.flags.paintingOrder;
+          if (!order.includes('p3')) { order.push('p3'); loadScene('corridor'); }
+          const isLast = order.length === 4 && !state.flags.allPaintingsSeen;
+          showDialog('【壁画：並んで歩く2つの影】\n二つの影が並んで霧の中を歩いている。一方は霧の存在、もう一方は迷い込んだ者——長い孤独の果てに、やっと誰かがいる。', null, isLast ? checkPaintingOrder : null);
         },
       },
       {
         id: 'p4', label: '壁画：光の中へ飛び出す瞬間',
         inspect() {
-          if (!state.flags.paintingsSeen) state.flags.paintingsSeen = [];
-          if (!state.flags.paintingsSeen.includes('p4')) {
-            state.flags.paintingsSeen.push('p4');
-            if (state.flags.paintingsSeen.length >= 4) state.flags.allPaintingsSeen = true;
-            loadScene(state.currentView);
-          }
-          showDialog('【壁画：光の中へ飛び出す瞬間】\n一つの影が光の中へと踏み出している。もう一方の影は霧の中に残り、それを見送っている。別れの絵——しかし悲しみではなく、解放の瞬間が描かれているようだ。');
+          if (!state.flags.paintingOrder) state.flags.paintingOrder = [];
+          const order = state.flags.paintingOrder;
+          if (!order.includes('p4')) { order.push('p4'); loadScene('corridor'); }
+          const isLast = order.length === 4 && !state.flags.allPaintingsSeen;
+          showDialog('【壁画：光の中へ飛び出す瞬間】\n一つの影が光の中へと踏み出している。もう一方の影は霧の中に残り、それを見送っている。別れの絵——しかし悲しみではなく、解放の瞬間が描かれているようだ。', null, isLast ? checkPaintingOrder : null);
         },
       },
       {
         id: 'enter_muistora', label: 'ネブリアの間へ',
         inspect() {
           if (!state.flags.allPaintingsSeen) {
-            showDialog('……まず、私の記憶を見よ。\n（壁画を全て調べよう）');
+            showDialog('……絵画が正しい順に並んでいない。\n四枚の絵を物語の順にタップせよ。');
           } else {
             loadScene('muistora');
           }
@@ -925,12 +941,10 @@ function getHint() {
     return '火のついた燭台を後ろ壁の石板に使ってみよう';
   if (!inv.includes('rubbing'))
     return '霧の写し紙を後ろ壁の石板に使って拓本を取ろう';
-  if (!inv.includes('overlay_sheet'))
+  if (!f.overlayRead && !inv.includes('overlay_sheet'))
     return 'インベントリで霧の写し紙と石板の拓本を合成しよう';
-  if (!f.windowIlluminated)
-    return '火のついた燭台を右壁の窓枠に使ってみよう';
   if (!f.overlayRead)
-    return '重ね合わせの紙をインベントリで確認しよう';
+    return '火のついた燭台を右壁の窓枠に使い、重ね合わせの紙をかざしてみよう';
   if (!inv.includes('stone_fragment'))
     return '右の壁の石板の破片を拾おう';
   if (f.symbolOrder.length < 3)
@@ -943,16 +957,18 @@ function getHint() {
     return '結晶の鍵を扉に使おう';
   if (state.currentView !== 'corridor' && state.currentView !== 'muistora')
     return '扉が開いた。先に進もう';
-  if (!f.allPaintingsSeen)
-    return '回廊の壁画を全て調べよう（4枚）';
+  if (!f.allPaintingsSeen) {
+    const cnt = (f.paintingOrder || []).length;
+    return cnt === 0
+      ? '回廊の壁画を物語の順にタップせよ（孤独→光→同行→飛躍）'
+      : `回廊の壁画を物語の順にタップせよ（${cnt}/4）`;
+  }
   if (f.muistraDialogue === 0)
     return 'ネブリアに話しかけよう';
   if (f.muistraDialogue === 1)
-    return '第一の問い：迷子として素直に答えよう';
-  if (f.muistraDialogue === 2)
     return '第二の問い：壁画「孤独な影」を思い出そう';
-  if (f.muistraDialogue === 3)
-    return '第三の問い：壁画「光の中へ飛び出す瞬間」を思い出そう';
+  if (f.muistraDialogue === 2)
+    return '第三の問い：壁画「並んで歩く二つの影」を思い出せ';
   return 'よく探索できている。先に進もう';
 }
 

@@ -25,9 +25,8 @@ const COMBINE_RECIPES = [
   {
     inputs: ['mist_paper', 'rubbing'],
     output: 'overlay_sheet',
-    message: '霧の写し紙と拓本を重ね合わせると、透かして文字が読めた——「◆は遅く、▲は中、○は速く、扉に捧げよ」',
+    message: '霧の写し紙と拓本を重ね合わせると、光を透かせば何かが読めそうな紙ができた。「重ね合わせの紙」を手に入れた。',
     sfx: 'combine',
-    onCombine: () => { state.flags.overlayRead = true; },
   },
   {
     inputs: ['stone_fragment', 'magic_stone'],
@@ -73,13 +72,34 @@ const MUISTRA_DIALOGUE = [
   {
     question: '「二つの影が並んで歩く……もし私が扉を開けたなら、お前はどうする」',
     choices: [
-      { text: '「すぐに逃げる」',             correct: false },
-      { text: '「また来る。今度は話をしに」', correct: true  },
-      { text: '「お前のことを誰かに伝える」', correct: false },
+      {
+        text: '「すぐに逃げる」',
+        onSelect: () => {
+          showDialog(
+            '「……そうか。ならば——それまでだ」\n\nネブリアの気配が消える。霧が重く垂れ込め、出口を探すしかなかった。',
+            null, () => triggerEnding('bad'), 'ネブリア'
+          );
+        },
+      },
+      {
+        text: '「また来る。今度は話をしに」',
+        onSelect: () => {
+          showDialog(
+            '「……ふ。そうか」\n\n長い沈黙の後、霧が静かに晴れていく。\n\n「行け。……また、来い」',
+            null, () => triggerEnding('good'), 'ネブリア'
+          );
+        },
+      },
+      {
+        text: '「お前のことを誰かに伝える」',
+        onSelect: () => {
+          showDialog(
+            '「……伝えるか。私の、ことを」\n\nネブリアはしばらく沈黙した後、ゆっくりと扉を開いた。\n\n「……行け」',
+            null, () => triggerEnding('neutral'), 'ネブリア'
+          );
+        },
+      },
     ],
-    correct_response: '「……ふ。そうか」\n\n長い沈黙の後、霧が静かに晴れていく。\n\n「行け。……また、来い」',
-    wrong_response:   '「……それでは、駄目だ」',
-    onCorrect: () => { triggerEnding('good'); },
   },
 ];
 
@@ -596,19 +616,31 @@ ${!fragTaken ? `
         id: 'window_frame',
         label: '窓枠の跡',
         inspect() {
-          if (state.flags.windowIlluminated) {
+          if (state.flags.overlayRead) {
             showDialog('光が床の封印紋を照らしている。○ ▲ ◆ の順が読めた。正面に戻って確かめよう。');
+          } else if (state.flags.windowIlluminated) {
+            showDialog('光が金属に反射している。重ね合わせの紙をここで使えば、記号の順番が読めるかもしれない。');
           } else {
             showDialog('かつて窓があった凹み。金属の光沢が残っている。光を当てれば何か反射するかもしれない。');
           }
         },
-        canUse(itemId) { return itemId === 'lit_candle' && !state.flags.windowIlluminated; },
+        canUse(itemId) {
+          if (itemId === 'lit_candle' && !state.flags.windowIlluminated) return true;
+          if (itemId === 'overlay_sheet' && state.flags.windowIlluminated && !state.flags.overlayRead) return true;
+          return false;
+        },
         use(itemId) {
-          state.flags.windowIlluminated = true;
-          state.flags.overlayRead = true;
-          triggerSFX('item_use');
-          loadScene(state.currentView);
-          showDialog('燭台の炎が窓枠の金属に反射し、床の封印紋を照らした。霧越しに記号の順番が読める——○、▲、◆');
+          if (itemId === 'lit_candle') {
+            state.flags.windowIlluminated = true;
+            triggerSFX('item_use');
+            loadScene(state.currentView);
+            showDialog('燭台の炎が窓枠の金属に反射し、床の封印紋を照らした。記号が浮かび上がるが、霧で順番までは判別できない。重ね合わせの紙があれば読めるかもしれない。');
+          } else if (itemId === 'overlay_sheet') {
+            state.flags.overlayRead = true;
+            triggerSFX('combine');
+            loadScene(state.currentView);
+            showDialog('重ね合わせの紙を光にかざすと、封印紋の記号が鮮明になった——速さの順に ○、▲、◆ と刻まれている。正面の扉に同じ順で入力せよ。');
+          }
         },
       },
     ],
@@ -929,27 +961,30 @@ function getHint() {
   const f = state.flags;
   const inv = state.inventory;
 
-  if (!inv.includes('mist_paper'))
+  // 消費・変形されるアイテムはフラグで判定する
+  if (!f.mistPaperTaken)
     return '正面の天井の霧を調べてみよう';
-  if (!inv.includes('candle'))
+  if (!f.candleTaken)
     return '左の壁にある燭台を調べてみよう';
-  if (!inv.includes('oil_jar'))
+  if (!f.oilJarTaken)
     return '後ろの壁にある壺を調べてみよう';
   if (!inv.includes('lit_candle'))
     return 'インベントリで燭台と油の壺を選んで合成してみよう';
   if (!f.tabletRevealed)
     return '火のついた燭台を後ろ壁の石板に使ってみよう';
-  if (!inv.includes('rubbing'))
+  if (!f.rubbingDone)
     return '霧の写し紙を後ろ壁の石板に使って拓本を取ろう';
-  if (!f.overlayRead && !inv.includes('overlay_sheet'))
+  if (!inv.includes('overlay_sheet'))
     return 'インベントリで霧の写し紙と石板の拓本を合成しよう';
+  if (!f.windowIlluminated)
+    return '火のついた燭台を右壁の窓枠に使ってみよう';
   if (!f.overlayRead)
-    return '火のついた燭台を右壁の窓枠に使い、重ね合わせの紙をかざしてみよう';
-  if (!inv.includes('stone_fragment'))
+    return '重ね合わせの紙を右壁の窓枠に使ってみよう';
+  if (!f.stoneFragmentTaken)
     return '右の壁の石板の破片を拾おう';
   if (f.symbolOrder.length < 3)
     return '正面の扉のシンボルを ○→▲→◆ の順でタップしよう';
-  if (!inv.includes('magic_stone'))
+  if (!f.magicStoneRemoved)
     return '正面の扉を調べると封印星晶が外れるはずだ';
   if (!inv.includes('crystal_key'))
     return 'インベントリで結晶片と封印星晶を合成しよう';

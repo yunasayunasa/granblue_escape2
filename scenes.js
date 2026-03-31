@@ -105,7 +105,7 @@ const MUISTRA_DIALOGUE = [
 
 // ===== 絵画順序チェック =====
 function checkPaintingOrder() {
-  const correct = ['p1', 'p2', 'p3', 'p4'];
+  const correct = ['p3', 'p2', 'p4', 'p1'];
   const order = state.flags.paintingOrder || [];
   const isCorrect = order.length === 4 && order.every((p, i) => p === correct[i]);
   if (isCorrect) {
@@ -995,8 +995,8 @@ function getHint() {
   if (!f.allPaintingsSeen) {
     const order = f.paintingOrder || [];
     const cnt = order.length;
-    const nextNames = ['孤独な影（左壁・上）', '遠くの光（左壁・下）', '並んで歩く2つの影（右壁・上）', '光の中へ飛び出す瞬間（右壁・下）'];
-    const correctIds = ['p1', 'p2', 'p3', 'p4'];
+    const nextNames = ['並んで歩く2つの影（右壁・上）', '遠くの光（左壁・下）', '光の中へ飛び出す瞬間（右壁・下）', '孤独な影（左壁・上）'];
+    const correctIds = ['p3', 'p2', 'p4', 'p1'];
     const nextIdx = correctIds.findIndex(id => !order.includes(id));
     if (cnt === 0) {
       return `四枚の壁画を物語の順にタップせよ\nまず「${nextNames[0]}」から`;
